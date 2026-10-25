@@ -1,0 +1,1506 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f9d76">
+<meta name="robots" content="noindex, nofollow">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="יומן בריאות">
+<title>יומן הבריאות של משה</title>
+<style>
+:root{--bg:#f3f5f9;--card:#fff;--text:#1f2937;--muted:#6b7280;--line:#e5e7eb;--soft:#f1f5f9;--accent:#0f9d76;--accent2:#0ea5e9;--danger:#e11d48;--shadow:0 1px 2px rgba(16,24,40,.05),0 6px 18px rgba(16,24,40,.06);--r:18px}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1317;--card:#172027;--text:#e5e7eb;--muted:#9aa4af;--line:#26323b;--soft:#1e2a33;--shadow:none}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Rubik,Assistant,Heebo,Arial,sans-serif;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent;padding-bottom:calc(104px + env(safe-area-inset-bottom));line-height:1.45}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.top{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#0f9d76,#0ea5e9);color:#fff;padding:calc(12px + env(safe-area-inset-top)) 16px 12px;box-shadow:0 2px 12px rgba(0,0,0,.12)}
+.top-in{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.top h1{font-size:1.15rem;margin:0;font-weight:700}
+.top p{margin:0;font-size:.8rem;opacity:.9}
+.logo{font-size:1.6rem}
+.saved{margin-inline-start:auto;font-size:.78rem;background:rgba(255,255,255,.2);padding:3px 10px;border-radius:99px;opacity:0;transition:opacity .3s}
+.saved.show{opacity:1}
+main{max-width:640px;margin:0 auto;padding:12px}
+.view{display:none}.view.active{display:block}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;margin-bottom:12px;border:1px solid var(--line)}
+.card h2{font-size:1rem;margin:0 0 10px;display:flex;align-items:center;gap:6px}
+.muted{color:var(--muted);font-size:.85rem}
+.datebar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.icon-btn{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:1.3rem;display:grid;place-items:center;flex:none}
+.icon-btn:disabled{opacity:.35}
+.date-label{flex:1;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-weight:600;position:relative}
+.date-label small{display:block;font-size:.72rem;color:var(--muted);font-weight:400;margin-top:-3px}
+#datePicker{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;bottom:0;left:50%}
+.link-btn{background:none;border:0;color:var(--accent);font-weight:600;padding:2px 4px;margin-bottom:6px}
+.hidden{display:none!important}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-size:.82rem;white-space:nowrap}
+.chip b{font-weight:700}
+.meal{margin-bottom:10px}
+.meal label{font-size:.85rem;color:var(--muted);display:block;margin-bottom:3px}
+.meal-row{display:flex;gap:6px}
+textarea,input[type=number],input[type=text]{width:100%;border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:9px 11px;outline:none;resize:none;min-height:42px}
+textarea:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(15,157,118,.15)}
+.cal{width:84px!important;flex:none;text-align:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:block;margin-bottom:10px}
+.field>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom:3px}
+.ex-row{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+.ex-row .ex-type{flex:1}
+.ex-row .ex-min{width:84px;flex:none;text-align:center}
+.del{width:36px;height:36px;flex:none;border-radius:10px;border:0;background:transparent;color:var(--muted);font-size:1.1rem}
+.ex-detail{font-size:.75rem;color:var(--muted);margin:-3px 4px 8px}
+.btn{border:0;border-radius:12px;padding:10px 14px;font-weight:600;background:var(--accent);color:#fff}
+.btn.ghost{background:var(--soft);color:var(--accent);border:1px dashed var(--accent)}
+.btn.sec{background:var(--soft);color:var(--text);border:1px solid var(--line)}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--danger)}
+.btn.block{width:100%}
+.water{display:flex;align-items:center;gap:10px}
+.water button{width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:var(--soft);font-size:1.3rem}
+.water-val{flex:1;text-align:center}
+.water-val b{font-size:1.4rem}
+.glasses{font-size:.95rem;letter-spacing:1px;min-height:1.2em;word-break:break-all}
+.moods{display:flex;justify-content:space-between;gap:4px}
+.mood{flex:1;font-size:1.6rem;padding:6px 0;border-radius:12px;border:2px solid transparent;background:var(--soft);filter:grayscale(.7);opacity:.75}
+.mood.sel{border-color:var(--accent);filter:none;opacity:1;background:rgba(15,157,118,.12)}
+.voice-hint{display:flex;gap:10px;align-items:center;background:linear-gradient(135deg,rgba(15,157,118,.10),rgba(14,165,233,.10));border:1px solid rgba(15,157,118,.25)}
+.voice-hint .big{font-size:1.8rem}
+nav.bottom{position:fixed;bottom:0;left:0;right:0;z-index:30;background:var(--card);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+nav.bottom .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 88px 1fr 1fr;align-items:end}
+.tab{background:none;border:0;padding:4px 0;font-size:.72rem;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:1px}
+.tab .i{font-size:1.25rem}
+.tab.active{color:var(--accent);font-weight:700}
+.mic-fab{justify-self:center;width:72px;height:72px;border-radius:50%;border:4px solid var(--bg);margin-top:-34px;background:linear-gradient(135deg,#0f9d76,#0ea5e9);color:#fff;font-size:2rem;box-shadow:0 6px 18px rgba(14,165,233,.45);display:grid;place-items:center}
+.mic-fab:active{transform:scale(.96)}
+.mic-label{grid-column:3;text-align:center;font-size:.72rem;color:var(--accent);font-weight:700}
+/* history */
+.hday{cursor:pointer}
+.hday .hd{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+.hday .hd b{font-size:.95rem}
+.hday .meals{font-size:.83rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.stats div{background:var(--soft);border-radius:12px;padding:8px 4px}
+.stats b{display:block;font-size:1.25rem}
+.stats span{font-size:.75rem;color:var(--muted)}
+/* charts */
+.chart svg{width:100%;height:auto;display:block;direction:ltr}
+.chart .sum{display:flex;gap:14px;font-size:.82rem;color:var(--muted);margin-top:4px;flex-wrap:wrap}
+.chart .sum b{color:var(--text)}
+.empty{text-align:center;color:var(--muted);padding:24px 8px;font-size:.9rem}
+/* sheet */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:50;display:none;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+.sheet{background:var(--card);width:100%;max-width:640px;max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.sheet h3{margin:0 0 4px;font-size:1.1rem}
+.rec-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;margin:12px 0}
+.rec-btn{width:84px;height:84px;border-radius:50%;border:0;background:linear-gradient(135deg,#0f9d76,#0ea5e9);color:#fff;font-size:2.2rem;position:relative}
+.rec-btn.on{background:linear-gradient(135deg,#e11d48,#f97316)}
+.rec-btn.on::after{content:"";position:absolute;inset:-8px;border-radius:50%;border:3px solid rgba(225,29,72,.5);animation:pulse 1.2s infinite}
+@keyframes pulse{0%{transform:scale(.9);opacity:1}100%{transform:scale(1.25);opacity:0}}
+.rec-status{font-size:.85rem;color:var(--muted);text-align:center}
+.warn{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);border-radius:12px;padding:10px;font-size:.85rem;margin:8px 0}
+.preview{list-style:none;margin:8px 0;padding:0}
+.preview li{display:flex;gap:8px;padding:8px 10px;border-radius:12px;background:var(--soft);margin-bottom:6px;font-size:.9rem}
+.preview li .k{font-weight:700;white-space:nowrap}
+.preview li.note{background:rgba(245,158,11,.10)}
+.sheet-actions{display:flex;gap:8px;margin-top:10px}
+.sheet-actions .btn{flex:1}
+.toast{position:fixed;bottom:calc(110px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:99px;font-size:.9rem;z-index:60;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;text-align:center}
+.toast.show{opacity:.95}
+.backup-actions{display:grid;gap:8px}
+.checkin-btn{width:100%;display:flex;align-items:center;gap:12px;text-align:start;border:0;border-radius:var(--r);padding:14px 16px;margin-bottom:12px;color:#fff;background:linear-gradient(135deg,#0f9d76,#0ea5e9);box-shadow:0 6px 18px rgba(14,165,233,.30)}
+.checkin-btn .big{font-size:2rem}
+.checkin-btn b{display:block;font-size:1.08rem}
+.checkin-btn small{display:block;opacity:.9;font-size:.8rem}
+.checkin-btn:active{transform:scale(.99)}
+.tri{display:flex;align-items:center;gap:6px;margin-bottom:8px}
+.tri>span{flex:1;font-size:.9rem}
+.tbtn{border:1px solid var(--line);background:var(--soft);border-radius:99px;padding:5px 14px;font-size:.85rem;min-width:52px}
+.tbtn.sel{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.ci-top{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.ci-top .muted{flex:1}
+.icon-sm{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--soft);font-size:1rem;display:grid;place-items:center}
+.ci-bar{height:5px;border-radius:9px;background:var(--soft);overflow:hidden;margin-bottom:14px}
+.ci-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#0f9d76,#0ea5e9);transition:width .3s}
+.ci-q{font-size:1.3rem;font-weight:700;margin:4px 0 2px;line-height:1.35}
+.ci-sub{font-size:.85rem;color:var(--muted);margin-bottom:6px;min-height:1em}
+.ci-status{display:flex;align-items:center;gap:8px;font-size:.9rem;color:var(--muted);margin:8px 0;min-height:1.6em}
+.ci-status.listen{color:var(--danger);font-weight:600}
+.ci-status.listen::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--danger);animation:blink 1s infinite;flex:none}
+@keyframes blink{50%{opacity:.25}}
+.ci-quick{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.ci-quick button{flex:1;min-width:56px;border:1px solid var(--line);background:var(--soft);border-radius:14px;padding:11px 8px;font-size:1rem;font-weight:600}
+.ci-quick button.mood-q{font-size:1.5rem;padding:6px 4px}
+.ci-got{font-size:.9rem;margin:6px 0;min-height:1.3em}
+.ci-got.ok{color:var(--accent);font-weight:600}
+.ci-links{display:flex;justify-content:space-between;margin-top:8px}
+.ci-links .link-btn{margin:0;font-size:.9rem}
+.sum-row{margin-bottom:10px}
+.sum-row>span{display:block;font-size:.85rem;color:var(--muted);margin-bottom:3px}
+.car-toggle{display:flex;align-items:center;gap:10px;width:100%;text-align:right;border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:var(--r);padding:10px 14px;margin:-4px 0 12px;box-shadow:var(--shadow)}
+.car-toggle .big{font-size:1.4rem}.car-toggle small{display:block;color:var(--muted);font-size:.75rem;font-weight:400}
+.car-toggle.on{border-color:var(--accent);background:rgba(15,157,118,.12)}.car-toggle.on b span{color:var(--accent)}
+.car-item{border-top:1px solid var(--line);padding:8px 0;font-size:.9rem}.car-item:first-of-type{border-top:0}
+.car-meta{display:flex;align-items:center;gap:8px;margin-bottom:2px}.car-acts{display:flex;gap:6px;margin-top:6px}
+.mini{border:0;border-radius:10px;padding:5px 10px;font-size:.8rem;font-weight:600;background:var(--accent);color:#fff}.mini.sec{background:var(--soft);color:var(--text);border:1px solid var(--line)}
+.sw{display:flex;align-items:center;gap:10px;padding:6px 0;font-weight:600}.sw input{width:22px;height:22px;accent-color:var(--accent)}
+.car-warn div{font-size:.85rem;background:rgba(234,179,8,.14);border-radius:10px;padding:6px 10px;margin:6px 0}
+code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px;font-family:inherit;font-size:.85rem;margin:6px 0}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-in"><span class="logo">💚</span><div><h1>יומן הבריאות של משה</h1><p id="subtitle">אוכל · ספורט · שינה · מדדים</p></div><span class="saved" id="saved">נשמר ✓</span></div></header>
+
+<main>
+  <section class="view active" id="view-day">
+    <div class="datebar">
+      <button class="icon-btn" id="prevDay" aria-label="יום קודם">›</button>
+      <button class="date-label" id="dateLabel"><span id="dateText"></span><small id="dateSub"></small><input type="date" id="datePicker" tabindex="-1" aria-hidden="true"></button>
+      <button class="icon-btn" id="nextDay" aria-label="יום הבא">‹</button>
+    </div>
+    <button class="link-btn hidden" id="todayBtn">↩ חזרה להיום</button>
+    <div class="chips" id="dayChips"></div>
+    <button class="checkin-btn" id="ciStart"><span class="big">💬</span><span><b>שאל אותי על היום</b><small>בערך דקה · אני שואל בקול ואתה עונה</small></span></button>
+    <button class="car-toggle hidden" id="carToggle"><span class="big">🚗</span><span><b>מצב רכב: <span id="carToggleState">כבוי</span></b><small>כפתור Play בהגה = דיבור ליומן</small></span></button>
+    <div class="card voice-hint" id="voiceHint"><span class="big">🎤</span><div><b>ספר לי איך היה היום</b><div class="muted">לחץ על המיקרופון ודבר חופשי – אני אמלא את השדות בשבילך</div></div></div>
+    <div id="dayBody"></div>
+  </section>
+
+  <section class="view" id="view-history">
+    <div class="card"><h2>📜 היסטוריה</h2><div class="stats" id="histStats"></div></div>
+    <div id="carReview"></div>
+    <div id="histList"></div>
+  </section>
+
+  <section class="view" id="view-charts">
+    <div class="card chart"><h2>⚖️ משקל – 30 ימים אחרונים</h2><div id="chWeight"></div></div>
+    <div class="card chart"><h2>😴 שינה – 30 ימים אחרונים</h2><div id="chSleep"></div></div>
+    <div class="card chart"><h2>🏃 דקות ספורט – 30 ימים אחרונים</h2><div id="chEx"></div></div>
+  </section>
+
+  <section class="view" id="view-backup">
+    <div class="card"><h2>💾 גיבוי ושחזור</h2>
+      <p class="muted">הנתונים נשמרים רק במכשיר הזה (בדפדפן). מומלץ לייצא גיבוי מדי פעם.</p>
+      <div class="backup-actions">
+        <button class="btn" id="exportBtn">⬇️ ייצוא גיבוי (JSON)</button>
+        <button class="btn sec hidden" id="shareBtn">📤 שיתוף גיבוי (וואטסאפ / מייל / דרייב)</button>
+        <button class="btn sec" id="importBtn">⬆️ ייבוא מגיבוי</button>
+        <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+      </div>
+    </div>
+    <div class="card hidden" id="carSettings"><h2>🚗 מצב רכב – כפתור אחד לדיבור</h2>
+      <label class="sw"><input type="checkbox" id="carModeSw"><span>מצב רכב פועל</span></label>
+      <label class="sw"><input type="checkbox" id="carBtSw"><span>להשתמש במיקרופון של הרכב (בלוטות׳) אם אפשר</span></label>
+      <p class="muted">כשמצב רכב פועל: לוחצים על כפתור ה-Play/Pause בהגה (או באוזניות), שומעים "מקשיב", אומרים משפט אחד – למשל "אכלתי סלט בצהריים והלכתי חצי שעה" – ושומעים "רשמתי: …". זה נשמר לבד ביומן של היום ומסומן 🚗 לבדיקה אחר כך.</p>
+      <p class="muted">טעות? לוחצים שוב על הכפתור תוך 10 שניות, או לוחצים ואומרים "בטל".</p>
+      <div id="carWarn" class="car-warn"></div>
+      <div class="backup-actions">
+        <button class="btn sec hidden" id="carBattery">🔋 אל תעצור ברקע (חיסכון בסוללה)</button>
+        <button class="btn sec" id="carWidget">➕ ווידג׳ט "🎤 דבר ליומן" למסך הבית</button>
+        <button class="btn sec" id="carShortcut">➕ קיצור דרך "דבר ליומן"</button>
+        <button class="btn" id="carTest">🎤 נסה עכשיו</button>
+      </div>
+    </div>
+    <div class="card"><h2>💬 שאל אותי על היום</h2>
+      <p class="muted">הכפתור במסך הראשי פותח שיחה קצרה: אני שואל שאלה בקול, מקשיב לתשובה וממשיך לשאלה הבאה. אפשר גם להקליד, ללחוץ על כן / לא, או לדלג. בסוף מופיע סיכום שאפשר לתקן, ושום דבר לא נשמר עד שלוחצים "שמור ביומן". הכפתור 🔊 משתיק את הקול.</p>
+    </div>
+    <div class="card"><h2>🎤 איך מדברים עם היומן</h2>
+      <p class="muted">דבר בחופשיות, למשל:</p>
+      <code class="ex">אכלתי חביתה ולחם בבוקר, רצתי 30 דקות, ישנתי 7 שעות, שתיתי 6 כוסות מים, אני שוקל 82</code>
+      <code class="ex">בצהריים אכלתי שניצל ואורז 700 קלוריות, התאמנתי בחדר כושר שעה, מצב רוח 4</code>
+      <p class="muted">מילים שאני מזהה: אכלתי + בוקר/צהריים/ערב · רצתי/הלכתי/שחיתי/רכבתי/התאמנתי + דקות/שעה · ישנתי N שעות · שתיתי N כוסות · שוקל N · מרגיש טוב/מצב רוח N. כל השאר נכנס להערות. תמיד אפשר לתקן לפני השמירה.</p>
+    </div>
+    <div class="card"><h2>⚠️ מחיקה</h2><button class="btn danger block" id="wipeBtn">מחק את כל הנתונים</button></div>
+  </section>
+</main>
+
+<nav class="bottom"><div class="in">
+  <button class="tab active" data-view="day"><span class="i">📅</span>היום</button>
+  <button class="tab" data-view="history"><span class="i">📜</span>היסטוריה</button>
+  <button class="mic-fab" id="micFab" aria-label="דבר אל היומן">🎤</button>
+  <button class="tab" data-view="charts"><span class="i">📈</span>גרפים</button>
+  <button class="tab" data-view="backup"><span class="i">⚙️</span>הגדרות</button>
+</div></nav>
+
+<div class="overlay" id="voiceOverlay">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="vTitle">
+    <h3 id="vTitle">🎤 ספר לי על היום</h3>
+    <div class="muted" id="vTarget"></div>
+    <div class="warn hidden" id="vUnsupported">הדפדפן הזה לא תומך בזיהוי דיבור. מומלץ לפתוח ב-<b>Chrome</b> (אנדרואיד/מחשב) או ב-<b>Safari</b> (אייפון). בינתיים אפשר להקליד כאן למטה (או להשתמש במיקרופון של המקלדת) – הניתוח יעבוד אותו דבר.</div>
+    <div class="rec-wrap" id="recWrap">
+      <button class="rec-btn" id="recBtn" aria-label="התחל/עצור הקלטה">🎤</button>
+      <div class="rec-status" id="recStatus">לחץ כדי להתחיל לדבר</div>
+    </div>
+    <label class="field"><span>מה שאמרת (אפשר לערוך)</span><textarea id="vText" rows="3" placeholder="לדוגמה: אכלתי חביתה בבוקר, רצתי 30 דקות, ישנתי 7 שעות…"></textarea></label>
+    <div class="muted">מה הבנתי – בדוק לפני ההוספה:</div>
+    <ul class="preview" id="vPreview"></ul>
+    <div class="sheet-actions">
+      <button class="btn" id="vApply">✓ הוסף ליומן</button>
+      <button class="btn sec" id="vCancel">ביטול</button>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="ciOverlay">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="ciQ">
+    <div class="ci-top"><span class="muted" id="ciStep"></span><button class="icon-sm" id="ciMute" aria-label="קול">🔊</button><button class="icon-sm" id="ciClose" aria-label="סגור">✕</button></div>
+    <div class="ci-bar"><i id="ciBarFill"></i></div>
+    <div id="ciAsk">
+      <div class="ci-q" id="ciQ"></div>
+      <div class="ci-sub" id="ciSub"></div>
+      <div class="ci-status" id="ciStatus"></div>
+      <div class="ci-quick" id="ciQuick"></div>
+      <textarea id="ciText" rows="2" placeholder="אפשר גם להקליד כאן…"></textarea>
+      <div class="ci-got" id="ciGot"></div>
+      <div class="sheet-actions"><button class="btn sec" id="ciMic">🎤 דבר שוב</button><button class="btn" id="ciNext">המשך ←</button></div>
+      <div class="ci-links"><button class="link-btn" id="ciBack">→ לשאלה הקודמת</button><button class="link-btn" id="ciSkip">דלג</button><button class="link-btn" id="ciFinish">לסיכום ⏭</button></div>
+    </div>
+    <div id="ciSum" class="hidden">
+      <h3>סיכום היום 💚</h3>
+      <div class="muted" id="ciSumTarget" style="margin-bottom:10px"></div>
+      <div id="ciSumBody"></div>
+      <div class="sheet-actions"><button class="btn" id="ciSave">✓ שמור ביומן</button><button class="btn sec" id="ciCancel">ביטול</button></div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script id="parser">
+/* ===== Hebrew free-speech parser (pure, no DOM) ===== */
+(function (root) {
+  'use strict';
+  var NUM = {'אחד':1,'אחת':1,'שתיים':2,'שתים':2,'שניים':2,'שנים':2,'שני':2,'שתי':2,'שלוש':3,'שלושה':3,'שלש':3,'ארבע':4,'ארבעה':4,'חמש':5,'חמישה':5,'חמשה':5,'שש':6,'שישה':6,'ששה':6,'שבע':7,'שבעה':7,'שמונה':8,'תשע':9,'תשעה':9,'עשר':10,'עשרה':10,'עשרים':20,'שלושים':30,'ארבעים':40,'חמישים':50,'שישים':60,'שבעים':70,'שמונים':80,'תשעים':90,'מאה':100,'מאתיים':200,'אפס':0};
+  var MEALW = '(?:בוקר|צהריים|צהרים|ערב|לילה)';
+  var MEALMAP = {'בוקר':'breakfast','צהריים':'lunch','צהרים':'lunch','ערב':'dinner','לילה':'snacks'};
+  var MEALP = 'ו?(?:ב|ל)?(?:ארוחת\\s+)?' + MEALW;
+  var KW = 'ו?(?:אכלתי|שתיתי|רצתי|הלכתי|שחיתי|התאמנתי|רכבתי|ישנתי|עשיתי|שוקל|שוקלת|מרגיש|מרגישה|המשקל|משקל|מצב\\s+רוח|ו?(?:ב|ל)?ארוחת\\s+' + MEALW + ')(?=\\s|$)';
+  var SPLIT = new RegExp('\\s+(?=(?:' + MEALP + '\\s+ו?אכלתי(?=\\s|$))|' + KW + ')');
+  var LONE_MEAL = new RegExp('^' + MEALP + '$');
+  var START_MEAL = new RegExp('^' + MEALP + '(?=\\s|$)');
+  var MEAL_RE = new RegExp('(^|\\s)(ו?(?:ב|ל)?(?:ארוחת\\s+)?(בוקר|צהריים|צהרים|ערב|לילה))(?=\\s|$)', 'g');
+  var VERB_TYPE = {'רצתי':'ריצה','הלכתי':'הליכה','שחיתי':'שחייה','התאמנתי':'אימון','רכבתי':'רכיבה','עשיתי':null};
+  var SPORTS = [['חדר כושר','חדר כושר'],['כדורגל','כדורגל'],['כדורסל','כדורסל'],['פילאטיס','פילאטיס'],['ספינינג','ספינינג'],['משקולות','משקולות'],['מתיחות','מתיחות'],['אופניים','רכיבה'],['אירובי','אירובי'],['טניס','טניס'],['יוגה','יוגה'],['ריצה','ריצה'],['הליכה','הליכה'],['שחייה','שחייה'],['כושר','כושר'],['אימון','אימון'],['ספורט','ספורט']];
+  var DRINKS = /(?:^|\s)(?:קפה|תה|מיץ|בירה|יין|קולה|חלב|שייק|סודה|משקה|וויסקי|קקאו)(?=\s|$)/;
+  var FILL = '(?:ו|גם|וגם|היום|אני|ואני|ואז|אז|אחר\\s+כך|ואחר\\s+כך|אחרי\\s+זה|ואחרי\\s+זה|בנוסף|כן|אה|אמ|אממ)';
+  var FILL_START = new RegExp('^' + FILL + '(?:\\s+|$)');
+  var FILL_END = new RegExp('(?:^|\\s+)' + FILL + '$');
+
+  var TEEN = { 'עשרה': 1, 'עשר': 1 };
+  function placeUnit(v) { if (v !== Math.floor(v) || v <= 0) return 1; var u = 1; while (v % (u * 10) === 0) u *= 10; return u; }
+  function numVal(t) {
+    if (/^\d+(?:\.\d+)?$/.test(t)) return parseFloat(t);
+    return Object.prototype.hasOwnProperty.call(NUM, t) ? NUM[t] : undefined;
+  }
+  function normalizeNumbers(s) {
+    var toks = s.split(/\s+/).filter(Boolean), out = [];
+    for (var i = 0; i < toks.length; i++) {
+      var t = toks[i], v = numVal(t);
+      if (v === undefined && t.length > 1 && t.charAt(0) === 'ו' && numVal(t.slice(1)) !== undefined) v = numVal(t.slice(1));
+      if (v === undefined) { out.push(t); continue; }
+      var isWord = !/^\d/.test(t);
+      if (isWord && v >= 1 && v < 10 && i + 1 < toks.length && TEEN[toks[i + 1]]) { v += 10; i++; } // "שבע עשרה" = 17
+      while (i + 1 < toks.length) {
+        var n = toks[i + 1];
+        if (n === 'וחצי') { v += 0.5; i++; break; }
+        if (n === 'ורבע') { v += 0.25; i++; break; }
+        var unit = placeUnit(v), u, used = 1;
+        if (n.length > 1 && n.charAt(0) === 'ו' && (u = numVal(n.slice(1))) !== undefined) {
+          if (u >= 1 && u < 10 && i + 2 < toks.length && TEEN[toks[i + 2]]) { u += 10; used = 2; }
+          if (v >= 20 && unit > 1 && u >= 1 && u < unit && Math.floor(u) === u) { v += u; i += used; continue; }
+        } else if (isWord && v >= 100 && v % 100 === 0 && !/^\d/.test(n) && (u = numVal(n)) !== undefined && u >= 1 && u < 100) {
+          if (u < 10 && i + 2 < toks.length && TEEN[toks[i + 2]]) { u += 10; used = 2; }
+          v += u; i += used; continue; // "מאה עשרים" = 120
+        }
+        break;
+      }
+      out.push(String(Math.round(v * 100) / 100));
+    }
+    return out.join(' ');
+  }
+  function preClean(s) {
+    return String(s || '')
+      .replace(/[\u200f\u200e]/g, '')
+      .replace(/(^|\s)[ובלמה][-–־](?=\d)/g, '$1')
+      .replace(/(^|\s)[ובל](?=\d)/g, '$1')
+      .replace(/(\S)[-–־](\S)/g, '$1 $2')
+      .replace(/\s+/g, ' ').trim();
+  }
+  function trimFillers(s) {
+    var prev;
+    s = s.trim();
+    do { prev = s; s = s.replace(FILL_START, '').replace(FILL_END, '').trim(); } while (s !== prev);
+    return s;
+  }
+  function round2(x) { return Math.round(x * 100) / 100; }
+
+  function duration(s) {
+    var m = 0, found = false, r;
+    if ((r = s.match(/(?:^|\s)[וב]?חצי\s+שעה(?=\s|$)/))) { m += 30; found = true; s = s.replace(r[0], ' '); }
+    if ((r = s.match(/(?:^|\s)[וב]?רבע\s+שעה(?=\s|$)/))) { m += 15; found = true; s = s.replace(r[0], ' '); }
+    if ((r = s.match(/(\d+(?:\.\d+)?)\s*(?:שעות|שעה|ש')(?=\s|$)/))) { m += parseFloat(r[1]) * 60; found = true; s = s.replace(r[0], ' '); }
+    else if ((r = s.match(/(?:^|\s)[וב]?שעתיים(\s+וחצי)?(?=\s|$)/))) { m += r[1] ? 150 : 120; found = true; s = s.replace(r[0], ' '); }
+    else if ((r = s.match(/(?:^|\s)[וב]?שעה(\s+וחצי|\s+ורבע)?(?=\s|$)/))) { m += 60 + (r[1] ? (r[1].indexOf('חצי') >= 0 ? 30 : 15) : 0); found = true; s = s.replace(r[0], ' '); }
+    if ((r = s.match(/(\d+(?:\.\d+)?)\s*(?:דקות|דקה|דק'|דק)(?=\s|$)/))) { m += parseFloat(r[1]); found = true; s = s.replace(r[0], ' '); }
+    return { minutes: found ? Math.round(m) : null, rest: s };
+  }
+  function cleanText(t) {
+    t = trimFillers(t.replace(/\s+/g, ' '));
+    var prev;
+    do {
+      prev = t;
+      t = t.replace(/^(?:היה|הייתה|היתה|לי|ב|של|עם|כ|בערך|במשך)(?:\s+|$)/, '')
+           .replace(/(?:^|\s+)(?:של|בערך|כ|עם|ב|במשך|סה"כ|לערך)$/, '').trim();
+      t = trimFillers(t);
+    } while (t !== prev);
+    return t;
+  }
+  function addMeal(res, meal, text) {
+    var cal = null, m = text.match(/(\d+(?:\.\d+)?)\s*(?:קלוריות|קלוריה|קק"ל|קל)(?=\s|$)/);
+    if (m) { cal = parseFloat(m[1]); text = text.replace(m[0], ' '); }
+    text = cleanText(text);
+    if (!text && cal == null) return;
+    var cur = res.meals[meal] || (res.meals[meal] = { text: '', cal: null });
+    if (text) cur.text = cur.text ? cur.text + ', ' + text : text;
+    if (cal != null) cur.cal = (cur.cal || 0) + cal;
+  }
+  function parseFood(s, res, defMeal) {
+    s = s.replace(/(^|\s)ו?אכלתי(?=\s|$)/g, ' ').replace(/\s+/g, ' ').trim();
+    var marks = [], m;
+    MEAL_RE.lastIndex = 0;
+    while ((m = MEAL_RE.exec(s))) { var st = m.index + m[1].length; marks.push({ start: st, end: st + m[2].length, meal: MEALMAP[m[3]] }); }
+    var pieces = [];
+    if (!marks.length) pieces.push({ meal: defMeal, text: s });
+    else if (s.slice(0, marks[0].start).trim()) { // food before meal word: "חביתה בבוקר"
+      var last = 0;
+      marks.forEach(function (mk) { pieces.push({ meal: mk.meal, text: s.slice(last, mk.start) }); last = mk.end; });
+      pieces.push({ meal: marks[marks.length - 1].meal, text: s.slice(last) });
+    } else { // meal word before food: "בבוקר חביתה"
+      marks.forEach(function (mk, i) { pieces.push({ meal: mk.meal, text: s.slice(mk.end, i + 1 < marks.length ? marks[i + 1].start : s.length) }); });
+    }
+    var before = JSON.stringify(res.meals);
+    pieces.forEach(function (p) { addMeal(res, p.meal, p.text); });
+    return JSON.stringify(res.meals) !== before;
+  }
+  function findSport(s) {
+    for (var i = 0; i < SPORTS.length; i++) {
+      var re = new RegExp('(?:^|\\s)ו?(?:ב|ל)?' + SPORTS[i][0].replace(/\s+/g, '\\s+') + '(?=\\s|$)');
+      var m = s.match(re);
+      if (m) return { type: SPORTS[i][1], match: m[0] };
+    }
+    return null;
+  }
+  function parseExercise(s, res) {
+    var vm = s.match(/^ו?(רצתי|הלכתי|שחיתי|התאמנתי|רכבתי|עשיתי)/), verb = vm[1];
+    var rest = s.slice(vm[0].length);
+    if (verb === 'הלכתי' && /^\s*(?:לישון|למיטה)/.test(rest)) return false;
+    var d = duration(rest); rest = d.rest;
+    var km = null, m = rest.match(/(\d+(?:\.\d+)?)\s*(?:ק"מ|ק״מ|קמ|קילומטרים|קילומטר|קילו\s+מטר)(?=\s|$)/);
+    if (m) { km = parseFloat(m[1]); rest = rest.replace(m[0], ' '); }
+    var type = VERB_TYPE[verb], sport = findSport(rest);
+    if (sport) { if (verb === 'התאמנתי' || verb === 'עשיתי') type = sport.type; rest = rest.replace(sport.match, ' '); }
+    if (!type) return false; // "עשיתי" without a recognised sport
+    if (verb === 'הלכתי' && d.minutes == null && km == null && !/ברגל/.test(rest)) return false; // "הלכתי לעבודה"
+    var detail = cleanText(rest.replace(/(?:^|\s)ברגל(?=\s|$)/, ' '));
+    if (km != null) detail = km + ' ק"מ' + (detail ? ' · ' + detail : '');
+    res.exercises.push({ type: type, minutes: d.minutes, detail: detail });
+    return true;
+  }
+  function parseSleep(s, res) {
+    var rest = s.replace(/^ו?ישנתי/, ''), h = null, d = duration(rest), m;
+    if (d.minutes != null) h = d.minutes / 60;
+    else if ((m = rest.match(/(\d+(?:\.\d+)?)/))) h = parseFloat(m[1]);
+    if (h == null || h <= 0 || h > 24) return false;
+    res.sleep = round2(h);
+    return true;
+  }
+  function parseDrink(s, res, defMeal) {
+    var rest = s.replace(/^ו?שתיתי/, '').trim(), m, w = null;
+    var isWater = /(?:^|\s)ו?מים(?=\s|$)/.test(rest) || !DRINKS.test(rest);
+    if (isWater) {
+      if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(?:כוסות|כוס)(?=\s|$)/))) w = parseFloat(m[1]);
+      else if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(?:ליטר|ליטרים)(?=\s|$)/))) w = parseFloat(m[1]) * 4;
+      else if (/(?:^|\s)ליטר\s+וחצי(?=\s|$)/.test(rest)) w = 6;
+      else if (/(?:^|\s)חצי\s+ליטר(?=\s|$)/.test(rest)) w = 2;
+      else if (/(?:^|\s)ליטר(?=\s|$)/.test(rest)) w = 4;
+      else if (/(?:^|\s)כוס(?=\s|$)/.test(rest)) w = 1;
+      else if ((m = rest.match(/(\d+(?:\.\d+)?)\s*(?:בקבוקים|בקבוק)(?=\s|$)/))) w = parseFloat(m[1]) * 3;
+      if (w != null) { res.water = Math.round(w); return true; }
+      if (!DRINKS.test(rest)) return false;
+    }
+    return parseFood(rest, res, defMeal);
+  }
+  function parseWeight(s, res) {
+    var m = s.match(/(\d+(?:\.\d+)?)/);
+    if (!m) return false;
+    var w = parseFloat(m[1]);
+    if (w < 20 || w > 400) return false;
+    res.weight = round2(w);
+    return true;
+  }
+  var MOOD_WORDS = [
+    [1, /(?:^|\s)(?:גרוע|נורא|זוועה|על\s+הפנים|רע\s+מאוד)(?=\s|$)/],
+    [2, /(?:^|\s)(?:לא\s+טוב|לא\s+משהו|רע|עצוב|עצובה|עייף|עייפה|חולה|מדוכא|מדוכאת|לחוץ|לחוצה|חלש|חלשה)(?=\s|$)/],
+    [5, /(?:^|\s)(?:מצוין|מצויין|מעולה|נהדר|מדהים|פנטסטי|מושלם)(?=\s|$)/],
+    [4, /(?:^|\s)(?:טוב|שמח|שמחה|רגוע|רגועה|אנרגטי)(?=\s|$)/],
+    [3, /(?:^|\s)(?:בסדר|ככה\s+ככה|סביר|רגיל|נורמלי)(?=\s|$)/]
+  ];
+  function parseMood(s, res) {
+    var m = s.match(/(?:^|\s)([1-5])(?=\s|$)/);
+    if (m && /מצב\s+רוח/.test(s)) { res.mood = parseInt(m[1], 10); return true; }
+    for (var i = 0; i < MOOD_WORDS.length; i++) if (MOOD_WORDS[i][1].test(s)) { res.mood = MOOD_WORDS[i][0]; res.notes.push(s); return true; }
+    if (m) { res.mood = parseInt(m[1], 10); return true; }
+    return false;
+  }
+
+  function parse(text, opts) {
+    opts = opts || {};
+    var defMeal = opts.defaultMeal || 'snacks';
+    var res = { meals: {}, exercises: [], weight: null, sleep: null, water: null, mood: null, notes: [], segments: [] };
+    var raw = preClean(text);
+    if (!raw) return res;
+    var parts = [];
+    raw.split(/[,;!?\n:]+|\.(?!\d)/).forEach(function (chunk) {
+      chunk = chunk.trim();
+      if (chunk) chunk.split(SPLIT).forEach(function (p) { parts.push(p.trim()); });
+    });
+    // merge a lone meal word ("בבוקר") into the following "אכלתי ..." segment
+    var segs = [];
+    for (var i = 0; i < parts.length; i++) {
+      var p = trimFillers(parts[i]);
+      if (!p) continue;
+      if (LONE_MEAL.test(p)) {
+        if (i + 1 < parts.length && /^\s*ו?אכלתי(?=\s|$)/.test(trimFillers(parts[i + 1]))) { parts[i + 1] = p + ' ' + trimFillers(parts[i + 1]); }
+        continue;
+      }
+      segs.push(p);
+    }
+    segs.forEach(function (orig) {
+      var s = normalizeNumbers(orig), kind = 'note', ok = false;
+      if (/^ו?אכלתי(?=\s|$)/.test(s) || START_MEAL.test(s)) { kind = 'food'; ok = parseFood(s, res, defMeal); }
+      else if (/^ו?שתיתי(?=\s|$)/.test(s)) { kind = 'drink'; ok = parseDrink(s, res, defMeal); }
+      else if (/^ו?(?:רצתי|הלכתי|שחיתי|התאמנתי|רכבתי|עשיתי)(?=\s|$)/.test(s)) { kind = 'exercise'; ok = parseExercise(s, res); }
+      else if (/^ו?ישנתי(?=\s|$)/.test(s)) { kind = 'sleep'; ok = parseSleep(s, res); }
+      else if (/^ו?(?:שוקל|שוקלת|המשקל|משקל)(?=\s|$)/.test(s)) { kind = 'weight'; ok = parseWeight(s, res); }
+      else if (/^ו?(?:מרגיש|מרגישה|מצב\s+רוח)(?=\s|$)/.test(s)) { kind = 'mood'; ok = parseMood(s, res); }
+      if (!ok) { kind = 'note'; var nt = orig.replace(/^ו(?=(?:אכלתי|שתיתי|רצתי|הלכתי|שחיתי|התאמנתי|רכבתי|ישנתי|עשיתי|מרגיש|מרגישה)(?:\s|$))/, ''); if (nt.length > 1) res.notes.push(nt); }
+      res.segments.push({ text: orig, kind: kind });
+    });
+    return res;
+  }
+
+
+  /* ===== guided check-in: parse a short spoken answer to one question ===== */
+  var SKIP_RE = /(?:^|\s)(?:דלג|תדלג|לדלג|דלגי|הבא|הבאה|לא\s+יודע|לא\s+יודעת|לא\s+זוכר|לא\s+זוכרת|אין\s+לי\s+מושג|עזוב|פס)(?=\s|$)/;
+  var YES_W = ['כן','כמובן','בטח','ברור','נכון','אכן','בהחלט','היה','היו','הייתה','היתה','אכלתי','הקפדתי','קצת','יש','אוקיי','אוקי','יפה','כנראה','רוצה','בטוח','סבבה','חיובי','כמעט','דווקא'];
+  var NO_W = ['לא','לאו','אין','שום','ללא','אף','כלום','שלילי','נאדה','בכלל','ממש'];
+  function words(s) { return preClean(s).replace(/[.,!?;:"'״׳()\-]/g, ' ').split(/\s+/).filter(Boolean); }
+  function isSkip(text) { return SKIP_RE.test(' ' + preClean(text) + ' '); }
+  /** true / false / null (not understood). "לא היה" → false, "היה קצת" → true */
+  function yesNo(text) {
+    var w = words(text);
+    for (var i = 0; i < w.length; i++) {
+      var t = w[i];
+      if (NO_W.indexOf(t) >= 0) {
+        if ((t === 'בכלל' || t === 'ממש') && w[i + 1] !== 'לא') continue; // "ממש כן"
+        return false;
+      }
+      var bare = t.length > 2 && t.charAt(0) === 'ו' ? t.slice(1) : t;
+      if (YES_W.indexOf(t) >= 0 || YES_W.indexOf(bare) >= 0) return true;
+    }
+    return null;
+  }
+  function nums(text) {
+    var s = normalizeNumbers(preClean(text).replace(/[,!?;"]/g, ' '));
+    var out = [], re = /(\d+(?:\.\d+)?)/g, m;
+    while ((m = re.exec(s))) out.push(parseFloat(m[1]));
+    return out;
+  }
+  /** first number in the answer, optionally within [min,max]; "לא" / "כלום" → 0 when 0 is allowed */
+  function number(text, min, max) {
+    var a = nums(text);
+    for (var i = 0; i < a.length; i++) if ((min == null || a[i] >= min) && (max == null || a[i] <= max)) return round2(a[i]);
+    if (min != null && min <= 0 && yesNo(text) === false) return 0;
+    return null;
+  }
+  /** minutes of movement: "עשרים דקות", "חצי שעה", "שעה וחצי", "הלכתי 20 ורצתי 10 דקות", "לא" → 0 */
+  function minutes(text) {
+    var raw = preClean(text);
+    if (!raw) return null;
+    var p = parse(raw), sum = 0, any = false;
+    p.exercises.forEach(function (x) { if (x.minutes != null) { sum += x.minutes; any = true; } });
+    if (any) return Math.round(sum);
+    var d = duration(normalizeNumbers(raw));
+    if (d.minutes != null) return d.minutes;
+    var n = number(raw, 0, 600);
+    return n == null ? null : Math.round(n);
+  }
+  function hhmm(h, m) { return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'); }
+  /** spoken clock value → "HH:MM" bedtime ("אחת עשרה וחצי" → 23:30, "שתיים" → 02:00, "23:15") */
+  function bedClock(v) {
+    var h, m;
+    if (typeof v === 'string' && v.indexOf(':') > 0) { var a = v.split(':'); h = parseInt(a[0], 10); m = parseInt(a[1], 10); }
+    else { h = Math.floor(v); m = Math.round((v - h) * 60); }
+    if (isNaN(h) || isNaN(m) || h < 0 || h > 24 || m < 0 || m > 59) return null;
+    if (h === 12 || h === 24) h = 0; else if (h >= 7 && h <= 11) h += 12;
+    return hhmm(h, m);
+  }
+  /** "הלכתי לישון באחת עשרה וישנתי שבע שעות" → {bedtime:'23:00', hours:7} */
+  function sleepAnswer(text) {
+    var res = { bedtime: null, hours: null };
+    var s = ' ' + String(text || '') + ' ';
+    s = s.replace(/(\s)(?:ב|אחרי\s+)?חצות(?=\s|[,.])/g, '$1@ 0 ')
+         .replace(/(\s)(?:בשעה|בסביבות|בערך\s+ב|ב)[-–־]?\s*(?=\d)/g, '$1@ ');
+    s = s.split(/\s+/).map(function (t) {
+      if (t === 'בשעה' || t === 'בסביבות') return '@';
+      if (t.length > 2 && t.charAt(0) === 'ב' && numVal(t.slice(1)) !== undefined) return '@ ' + t.slice(1);
+      return t;
+    }).join(' ');
+    s = normalizeNumbers(preClean(s).replace(/[,!?;"]/g, ' '));
+    var m;
+    if ((m = s.match(/(\d+(?:\.\d+)?)\s*(?:שעות|שעה)(\s+וחצי)?(?=\s|$)/))) { res.hours = parseFloat(m[1]) + (m[2] ? 0.5 : 0); s = s.replace(m[0], ' '); }
+    else { var d = duration(s); if (d.minutes != null) { res.hours = d.minutes / 60; s = d.rest; } }
+    if ((m = s.match(/@\s*(\d{1,2}:\d{2}|\d+(?:\.\d+)?)/))) { res.bedtime = bedClock(m[1].indexOf(':') > 0 ? m[1] : parseFloat(m[1])); s = s.replace(m[0], ' '); }
+    if (!res.bedtime && (m = s.match(/(\d{1,2}:\d{2})/))) { res.bedtime = bedClock(m[1]); s = s.replace(m[0], ' '); }
+    var rest = [], re = /(\d+(?:\.\d+)?)/g;
+    while ((m = re.exec(s))) rest.push(parseFloat(m[1]));
+    if (rest.length >= 2 && !res.bedtime && res.hours == null) { res.bedtime = bedClock(rest[0]); res.hours = rest[1]; }
+    else if (rest.length) {
+      if (res.hours == null && (res.bedtime || rest.length === 1)) res.hours = rest[res.bedtime ? 0 : rest.length - 1];
+      else if (!res.bedtime) res.bedtime = bedClock(rest[0]);
+    }
+    if (res.hours != null && (res.hours <= 0 || res.hours > 16)) res.hours = null;
+    if (res.hours != null) res.hours = round2(res.hours);
+    return res;
+  }
+  function mood(text) {
+    var a = nums(text);
+    for (var i = 0; i < a.length; i++) if (a[i] >= 1 && a[i] <= 5) return Math.round(a[i]);
+    var s = ' ' + words(text).join(' ') + ' ';
+    for (var j = 0; j < MOOD_WORDS.length; j++) if (MOOD_WORDS[j][1].test(s)) return MOOD_WORDS[j][0];
+    return null;
+  }
+  function water(text) {
+    var p = parse('שתיתי ' + preClean(text));
+    if (p.water != null) return p.water;
+    var n = number(text, 0, 40);
+    return n == null ? null : Math.round(n);
+  }
+  function weight(text) { return number(text, 30, 400); }
+  /** "130 על 85", "130/85", "מאה שלושים על שמונים וחמש", "13 על 8" → "130/85" */
+  function bloodPressure(text) {
+    var s = normalizeNumbers(preClean(text).replace(/[,!?;"]/g, ' '));
+    var m = s.match(/(?:^|\D)(\d{1,3})(?:\s*(?:\/|\\|על|ל)\s*|\s+)(\d{1,3})(?!\d)/);
+    if (!m) return null;
+    var sys = parseInt(m[1], 10), dia = parseInt(m[2], 10);
+    if (sys <= 25 && dia <= 15) { sys *= 10; dia *= 10; } // "13 על 8"
+    if (sys < 70 || sys > 260 || dia < 35 || dia > 160 || sys <= dia) return null;
+    return sys + '/' + dia;
+  }
+  /** free-text food answer; chunks without a verb/meal word get "אכלתי" so "חביתה בבוקר, שניצל בצהריים" works */
+  var KW_START = new RegExp('^' + KW);
+  function foodAnswer(text) {
+    var chunks = preClean(text).split(/[,;\n]+|\.(?!\d)/).map(function (c) { return c.trim(); }).filter(Boolean);
+    var fixed = chunks.map(function (c) {
+      var t = trimFillers(c);
+      if (!t || /^(?:כלום|לא|לא\s+אכלתי|שום\s+דבר|עוד\s+לא|לא\s+אכלתי\s+עדיין)$/.test(t)) return '';
+      return KW_START.test(t) || START_MEAL.test(t) ? t : 'אכלתי ' + t;
+    }).filter(Boolean);
+    return parse(fixed.join(', '));
+  }
+  function notesAnswer(text) {
+    var t = trimFillers(preClean(text));
+    if (!t || /^(?:לא|אין|זהו|זהו\s+זה|זה\s+הכל|זה\s+הכול|כלום|לא\s+צריך|שום\s+דבר|לא\s+כרגע|ממש\s+לא|תודה)(?:\s+תודה)?$/.test(t.replace(/[.,!?]/g, ' ').replace(/\s+/g, ' ').trim())) return '';
+    return t;
+  }
+
+  var answers = { isSkip: isSkip, yesNo: yesNo, number: number, minutes: minutes, sleep: sleepAnswer, mood: mood, water: water, weight: weight, bloodPressure: bloodPressure, food: foodAnswer, notes: notesAnswer };
+  /** short Hebrew read-back of a parse() result, e.g. "ארוחת בוקר: חביתה, ריצה 30 דקות, 6 כוסות מים". No calories on purpose. */
+  function spokenNum(n) { n = round2(n); var w = Math.floor(n), f = round2(n - w); return f === 0.5 ? (w ? w + ' וחצי' : 'חצי') : String(n); }
+  function summarize(p) {
+    if (!p) return '';
+    var out = [], ML = { breakfast: 'ארוחת בוקר', lunch: 'צהריים', dinner: 'ערב', snacks: 'נשנוש' };
+    ['breakfast', 'lunch', 'dinner', 'snacks'].forEach(function (k) { var m = p.meals && p.meals[k]; if (m && m.text) out.push(ML[k] + ': ' + m.text); });
+    (p.exercises || []).forEach(function (x) {
+      var t = x.type || 'פעילות', mn = x.minutes;
+      if (mn == null || mn === '') out.push(t);
+      else if (mn === 60) out.push(t + ' שעה');
+      else if (mn === 90) out.push(t + ' שעה וחצי');
+      else if (mn === 120) out.push(t + ' שעתיים');
+      else out.push(t + ' ' + mn + ' דקות');
+    });
+    if (p.water != null) out.push(p.water === 1 ? 'כוס מים' : p.water + ' כוסות מים');
+    if (p.weight != null) out.push('משקל ' + p.weight);
+    if (p.sleep != null) out.push('שינה ' + (p.sleep === 1 ? 'שעה' : spokenNum(p.sleep) + ' שעות'));
+    if (p.mood != null) out.push('מצב רוח ' + p.mood);
+    if (p.notes && p.notes.length) {
+      var n = p.notes.join('. ');
+      if (n.length > 90) n = n.slice(0, 87).replace(/\s+\S*$/, '') + '…';
+      out.push('הערה: ' + n);
+    }
+    return out.join(', ');
+  }
+  var api = { parse: parse, normalizeNumbers: normalizeNumbers, answers: answers, summarize: summarize };
+  root.HealthParser = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+
+<script id="app">
+(function () {
+  'use strict';
+  var KEY = 'healthJournal.moshe.v1';
+  var MEALS = [['breakfast', 'ארוחת בוקר', '🍳'], ['lunch', 'ארוחת צהריים', '🥗'], ['dinner', 'ארוחת ערב', '🍲'], ['snacks', 'נשנושים / אחר', '🍎']];
+  var MOODS = [[1, '😞', 'רע מאוד'], [2, '😕', 'לא משהו'], [3, '😐', 'בסדר'], [4, '🙂', 'טוב'], [5, '😄', 'מצוין']];
+  var $ = function (id) { return document.getElementById(id); };
+
+  // ---------- dates ----------
+  function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function parseYmd(s) { var a = s.split('-').map(Number); return new Date(a[0], a[1] - 1, a[2]); }
+  function addDays(s, n) { var d = parseYmd(s); d.setDate(d.getDate() + n); return ymd(d); }
+  function today() { return ymd(new Date()); }
+  function fmtLong(s) { return parseYmd(s).toLocaleDateString('he-IL', { weekday: 'long', day: 'numeric', month: 'long' }); }
+  function fmtShort(s) { var d = parseYmd(s); return d.getDate() + '/' + (d.getMonth() + 1); }
+  function relLabel(s) { var t = today(); if (s === t) return 'היום'; if (s === addDays(t, -1)) return 'אתמול'; if (s === addDays(t, 1)) return 'מחר'; return parseYmd(s).getFullYear(); }
+
+  // ---------- data ----------
+  function blank() { return { meals: { breakfast: { text: '', cal: '' }, lunch: { text: '', cal: '' }, dinner: { text: '', cal: '' }, snacks: { text: '', cal: '' } }, exercises: [], weight: '', sleep: '', water: 0, mood: 0, notes: '', breakfast: null, onePlate: null, spiral: null, movement: '', bedtime: '', bloodPressure: '', car: [] }; }
+  var TRI = [['breakfast', '🍳 אכלתי ארוחת בוקר'], ['onePlate', '🍽️ צלחת אחת – חצי ירקות'], ['spiral', '🌀 היה סחרור / לופ מחשבתי']];
+  function tri(v) { return v === true || v === 'yes' ? true : v === false || v === 'no' ? false : null; }
+  function str(v) { return v == null ? '' : String(v); }
+  function normalizeEntry(e) {
+    var b = blank();
+    if (!e || typeof e !== 'object') return b;
+    MEALS.forEach(function (m) { var x = e.meals && e.meals[m[0]]; if (x) { b.meals[m[0]].text = str(x.text); b.meals[m[0]].cal = str(x.cal); } });
+    if (Array.isArray(e.exercises)) b.exercises = e.exercises.filter(Boolean).map(function (x) { return { type: str(x.type), minutes: str(x.minutes), detail: str(x.detail) }; });
+    b.weight = str(e.weight); b.sleep = str(e.sleep);
+    b.water = Math.max(0, parseInt(e.water, 10) || 0);
+    b.mood = Math.min(5, Math.max(0, parseInt(e.mood, 10) || 0));
+    b.notes = str(e.notes);
+    TRI.forEach(function (t) { b[t[0]] = tri(e[t[0]]); });
+    b.movement = str(e.movement); b.bedtime = str(e.bedtime); b.bloodPressure = str(e.bloodPressure);
+    if (Array.isArray(e.car)) b.car = e.car.filter(function (x) { return x && x.id; }).map(function (x) { return { id: str(x.id), ts: +x.ts || 0, text: str(x.text), summary: str(x.summary), reviewed: !!x.reviewed }; });
+    return b;
+  }
+  function isEmpty(e) {
+    return !(e.car && e.car.length) && !MEALS.some(function (m) { return e.meals[m[0]].text.trim() || e.meals[m[0]].cal !== ''; }) &&
+      !e.exercises.some(function (x) { return x.type.trim() || x.minutes !== ''; }) &&
+      e.weight === '' && e.sleep === '' && !e.water && !e.mood && !e.notes.trim() &&
+      e.breakfast == null && e.onePlate == null && e.spiral == null && e.movement === '' && e.bedtime === '' && e.bloodPressure === '';
+  }
+  function load() {
+    var db = { version: 1, entries: {} };
+    try { var r = JSON.parse(localStorage.getItem(KEY) || 'null'); if (r && r.entries) db.entries = r.entries; } catch (e) { }
+    Object.keys(db.entries).forEach(function (k) { db.entries[k] = normalizeEntry(db.entries[k]); });
+    return db;
+  }
+  var db = load();
+  var current = today();
+  function entry(d) { if (!db.entries[d]) db.entries[d] = blank(); return db.entries[d]; }
+  var saveTimer = null;
+  function persist(now) {
+    clearTimeout(saveTimer);
+    var go = function () {
+      Object.keys(db.entries).forEach(function (k) { if (isEmpty(db.entries[k]) && k !== current) delete db.entries[k]; });
+      var out = { version: 2, entries: {} };
+      Object.keys(db.entries).forEach(function (k) { if (!isEmpty(db.entries[k])) out.entries[k] = db.entries[k]; });
+      try { localStorage.setItem(KEY, JSON.stringify(out)); flashSaved(); return true; } catch (e) { toast('שגיאה בשמירה: ' + e.message); return false; }
+    };
+    if (now) return go(); saveTimer = setTimeout(go, 350); return true;
+  }
+  function num(v) { var n = parseFloat(v); return isNaN(n) ? null : n; }
+  function totals(e) {
+    var cal = 0, hasCal = false, ex = 0;
+    MEALS.forEach(function (m) { var c = num(e.meals[m[0]].cal); if (c != null) { cal += c; hasCal = true; } });
+    e.exercises.forEach(function (x) { var c = num(x.minutes); if (c != null) ex += c; });
+    var mv = num(e.movement); if (mv != null && mv > ex) ex = mv; // check-in "minutes of movement" is a daily total
+    return { cal: hasCal ? cal : null, ex: ex };
+  }
+
+  // ---------- ui helpers ----------
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  var toastT;
+  function toast(msg) { var t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(function () { t.classList.remove('show'); }, 2400); }
+  var savedT;
+  function flashSaved() { var s = $('saved'); s.classList.add('show'); clearTimeout(savedT); savedT = setTimeout(function () { s.classList.remove('show'); }, 1200); }
+  function autoGrow(ta) { ta.style.height = 'auto'; ta.style.height = Math.max(42, ta.scrollHeight + 2) + 'px'; }
+  function chipsHtml(e) {
+    var t = totals(e), c = [];
+    if (t.cal != null) c.push('🔥 <b>' + t.cal + '</b> קל׳');
+    if (t.ex) c.push('🏃 <b>' + t.ex + '</b> דק׳');
+    if (e.weight !== '') c.push('⚖️ <b>' + esc(e.weight) + '</b> ק"ג');
+    if (e.sleep !== '') c.push('😴 <b>' + esc(e.sleep) + '</b> ש׳');
+    if (e.water) c.push('💧 <b>' + e.water + '</b> כוסות');
+    if (e.mood) c.push(MOODS[e.mood - 1][1]);
+    if (e.car && e.car.length) c.push('🚗 <b>' + e.car.length + '</b> מהרכב');
+    if (e.breakfast === true) c.push('🍳 בוקר ✓');
+    if (e.onePlate === true) c.push('🍽️ צלחת אחת ✓');
+    if (e.spiral === true) c.push('🌀 היה לופ'); else if (e.spiral === false) c.push('🌿 בלי לופ');
+    if (e.bedtime) c.push('🌙 <b>' + esc(e.bedtime) + '</b>');
+    if (e.bloodPressure) c.push('🩺 <b dir="ltr">' + esc(e.bloodPressure) + '</b>');
+    return c.map(function (x) { return '<span class="chip">' + x + '</span>'; }).join('');
+  }
+
+  // ---------- day view ----------
+  function exRow(x, i) {
+    return '<div class="ex-row"><input type="text" class="ex-type" data-ex="' + i + '" data-f="type" placeholder="סוג (ריצה, הליכה…)" value="' + esc(x.type) + '">' +
+      '<input type="number" class="ex-min" inputmode="numeric" min="0" data-ex="' + i + '" data-f="minutes" placeholder="דק׳" value="' + esc(x.minutes) + '">' +
+      '<button class="del" data-act="delEx" data-i="' + i + '" aria-label="מחק">✕</button></div>' +
+      (x.detail ? '<div class="ex-detail">' + esc(x.detail) + '</div>' : '');
+  }
+  function triRow(k, label, v, attr) {
+    attr = attr || 'data-tri';
+    return '<div class="tri"><span>' + label + '</span><button class="tbtn' + (v === true ? ' sel' : '') + '" ' + attr + '="' + k + '" data-v="yes">כן</button>' +
+      '<button class="tbtn' + (v === false ? ' sel' : '') + '" ' + attr + '="' + k + '" data-v="no">לא</button></div>';
+  }
+  function setTriUI(root, attr, k, v) { root.querySelectorAll('[' + attr + '="' + k + '"]').forEach(function (b) { b.classList.toggle('sel', v != null && (b.dataset.v === 'yes') === v); }); }
+  function glasses(n) { return n ? '💧'.repeat(Math.min(n, 16)) + (n > 16 ? '…' : '') : '<span class="muted">עוד לא שתית</span>'; }
+  function renderDay() {
+    var e = entry(current), t = today();
+    $('dateText').textContent = fmtLong(current);
+    $('dateSub').textContent = relLabel(current);
+    $('datePicker').value = current;
+    $('todayBtn').classList.toggle('hidden', current === t);
+    $('nextDay').disabled = current >= t;
+    $('voiceHint').classList.toggle('hidden', !isEmpty(e));
+    var h = '';
+    h += '<div class="card"><h2>🍽️ ארוחות</h2>' + MEALS.map(function (m) {
+      var x = e.meals[m[0]];
+      return '<div class="meal"><label>' + m[2] + ' ' + m[1] + '</label><div class="meal-row">' +
+        '<textarea rows="1" data-meal="' + m[0] + '" data-f="text" placeholder="מה אכלת?">' + esc(x.text) + '</textarea>' +
+        '<input type="number" class="cal" inputmode="numeric" min="0" data-meal="' + m[0] + '" data-f="cal" placeholder="קל׳" value="' + esc(x.cal) + '"></div></div>';
+    }).join('') + '</div>';
+    h += '<div class="card"><h2>🏃 ספורט</h2><div id="exList">' + e.exercises.map(exRow).join('') + '</div>' +
+      '<button class="btn ghost block" data-act="addEx">+ הוסף פעילות</button></div>';
+    h += '<div class="card"><h2>📊 מדדים</h2><div class="grid2">' +
+      '<label class="field"><span>⚖️ משקל (ק"ג)</span><input type="number" step="0.1" min="0" inputmode="decimal" data-k="weight" placeholder="—" value="' + esc(e.weight) + '"></label>' +
+      '<label class="field"><span>😴 שינה (שעות)</span><input type="number" step="0.5" min="0" max="24" inputmode="decimal" data-k="sleep" placeholder="—" value="' + esc(e.sleep) + '"></label></div>' +
+      '<div class="field"><span>💧 מים (כוסות)</span><div class="water"><button data-act="water+" aria-label="עוד כוס">+</button>' +
+      '<div class="water-val"><b id="waterVal">' + e.water + '</b><div class="glasses" id="glasses">' + glasses(e.water) + '</div></div>' +
+      '<button data-act="water-" aria-label="פחות כוס">−</button></div></div>' +
+      '<div class="field"><span>🙂 מצב רוח</span><div class="moods">' + MOODS.map(function (m) {
+        return '<button class="mood' + (e.mood === m[0] ? ' sel' : '') + '" data-mood="' + m[0] + '" title="' + m[2] + '" aria-label="' + m[2] + '">' + m[1] + '</button>';
+      }).join('') + '</div></div></div>';
+    h += '<div class="card"><h2>🌱 הרגלים</h2>' + TRI.map(function (t) { return triRow(t[0], t[1], e[t[0]]); }).join('') +
+      '<div class="grid2" style="margin-top:6px">' +
+      '<label class="field"><span>🚶 דקות תנועה / הליכה</span><input type="number" min="0" inputmode="numeric" data-k="movement" placeholder="—" value="' + esc(e.movement) + '"></label>' +
+      '<label class="field"><span>🌙 הלכתי לישון בשעה</span><input type="time" data-k="bedtime" value="' + esc(e.bedtime) + '"></label></div>' +
+      '<label class="field"><span>🩺 לחץ דם (מדידה אחת)</span><input type="text" dir="ltr" inputmode="numeric" data-k="bloodPressure" placeholder="130/85" value="' + esc(e.bloodPressure) + '"></label></div>';
+    h += carDayHtml(e);
+    h += '<div class="card"><h2>📝 הערות</h2><textarea data-k="notes" rows="3" placeholder="תרופות, כאבים, תחושות, כל דבר חשוב…">' + esc(e.notes) + '</textarea></div>';
+    $('dayBody').innerHTML = h;
+    $('dayBody').querySelectorAll('textarea').forEach(autoGrow);
+    renderChips();
+  }
+  function renderChips() { $('dayChips').innerHTML = chipsHtml(entry(current)); }
+
+  $('dayBody').addEventListener('input', function (ev) {
+    var el = ev.target, e = entry(current), d = el.dataset;
+    if (d.meal) e.meals[d.meal][d.f] = el.value;
+    else if (d.ex != null) e.exercises[+d.ex][d.f] = el.value;
+    else if (d.k) e[d.k] = el.value;
+    else return;
+    if (el.tagName === 'TEXTAREA') autoGrow(el);
+    renderChips(); persist();
+  });
+  $('dayBody').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b) return;
+    var e = entry(current), act = b.dataset.act;
+    if (act === 'addEx') { e.exercises.push({ type: '', minutes: '', detail: '' }); $('exList').innerHTML = e.exercises.map(exRow).join(''); var ins = $('exList').querySelectorAll('.ex-type'); ins[ins.length - 1].focus(); return; }
+    if (act === 'delEx') { e.exercises.splice(+b.dataset.i, 1); $('exList').innerHTML = e.exercises.map(exRow).join(''); }
+    else if (act === 'water+' || act === 'water-') { e.water = Math.max(0, e.water + (act === 'water+' ? 1 : -1)); $('waterVal').textContent = e.water; $('glasses').innerHTML = glasses(e.water); }
+    else if (b.dataset.tri) { var k = b.dataset.tri, v = b.dataset.v === 'yes'; e[k] = e[k] === v ? null : v; setTriUI($('dayBody'), 'data-tri', k, e[k]); }
+    else if (b.dataset.mood) { var m = +b.dataset.mood; e.mood = e.mood === m ? 0 : m; $('dayBody').querySelectorAll('.mood').forEach(function (x) { x.classList.toggle('sel', +x.dataset.mood === e.mood); }); }
+    else return;
+    renderChips(); persist();
+  });
+  function setDate(d) { persist(true); current = d; renderDay(); }
+  $('prevDay').onclick = function () { setDate(addDays(current, -1)); };
+  $('nextDay').onclick = function () { if (current < today()) setDate(addDays(current, 1)); };
+  $('todayBtn').onclick = function () { setDate(today()); };
+  $('dateLabel').onclick = function () { var p = $('datePicker'); p.max = today(); try { if (p.showPicker) { p.showPicker(); return; } } catch (e) { } p.focus(); p.click(); };
+  $('datePicker').onchange = function () { if (this.value) setDate(this.value); };
+
+  // ---------- history ----------
+  function loggedDays() { return Object.keys(db.entries).filter(function (k) { return !isEmpty(db.entries[k]); }).sort().reverse(); }
+  function renderHistory() {
+    var days = loggedDays(), t = today(), streak = 0, d = t;
+    if (!db.entries[d] || isEmpty(db.entries[d])) d = addDays(d, -1);
+    while (db.entries[d] && !isEmpty(db.entries[d])) { streak++; d = addDays(d, -1); }
+    var last7 = days.filter(function (k) { return k > addDays(t, -7); }).length;
+    renderCarReview();
+    $('histStats').innerHTML = '<div><b>' + days.length + '</b><span>ימים ביומן</span></div><div><b>' + streak + '</b><span>רצף ימים 🔥</span></div><div><b>' + last7 + '/7</b><span>השבוע האחרון</span></div>';
+    if (!days.length) { $('histList').innerHTML = '<div class="card empty">עוד אין רשומות. לחץ על 🎤 וספר לי על היום שלך!</div>'; return; }
+    $('histList').innerHTML = days.map(function (k) {
+      var e = db.entries[k];
+      var meals = MEALS.filter(function (m) { return e.meals[m[0]].text.trim(); }).map(function (m) { return m[2] + ' ' + esc(e.meals[m[0]].text); }).join(' · ');
+      var ex = e.exercises.filter(function (x) { return x.type; }).map(function (x) { return esc(x.type) + (x.minutes ? ' ' + esc(x.minutes) + '′' : ''); }).join(', ');
+      return '<div class="card hday" data-day="' + k + '"><div class="hd"><b>' + esc(fmtLong(k)) + '</b><span class="muted">' + esc(relLabel(k)) + '</span></div>' +
+        '<div class="chips" style="margin-bottom:6px">' + chipsHtml(e) + '</div>' +
+        (meals ? '<div class="meals">' + meals + '</div>' : '') + (ex ? '<div class="meals">🏃 ' + ex + '</div>' : '') +
+        (e.notes ? '<div class="meals">📝 ' + esc(e.notes) + '</div>' : '') + '</div>';
+    }).join('');
+  }
+  $('histList').addEventListener('click', function (ev) { var c = ev.target.closest('.hday'); if (c) { current = c.dataset.day; showView('day'); } });
+
+  // ---------- charts ----------
+  function series(fn) { var out = [], t = today(); for (var i = 29; i >= 0; i--) { var d = addDays(t, -i), e = db.entries[d]; out.push({ d: d, v: e && !isEmpty(e) ? fn(e) : null }); } return out; }
+  function chart(data, o) {
+    var vals = data.filter(function (p) { return p.v != null; }).map(function (p) { return p.v; });
+    if (!vals.length) return '<div class="empty">אין עדיין נתונים לגרף הזה</div>';
+    var W = 340, H = 180, L = 34, R = 10, T = 14, B = 24, n = data.length, pw = W - L - R, ph = H - T - B;
+    var mn = Math.min.apply(null, vals), mx = Math.max.apply(null, vals);
+    if (o.bar) { mn = 0; mx = Math.max(mx * 1.1, 10); } else { var pad = Math.max((mx - mn) * 0.2, o.minPad || 1); mn = mn - pad; mx = mx + pad; if (o.floor0 && mn < 0) mn = 0; }
+    var x = function (i) { return L + (n === 1 ? pw / 2 : i * pw / (n - 1)); };
+    var y = function (v) { return T + (1 - (v - mn) / (mx - mn)) * ph; };
+    var fmt = function (v) { return Math.abs(v) >= 100 ? Math.round(v) : Math.round(v * 10) / 10; };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.label) + '">';
+    for (var g = 0; g <= 3; g++) { var gv = mn + (mx - mn) * g / 3, gy = y(gv); s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + gy + '" y2="' + gy + '" stroke="currentColor" stroke-opacity=".12"/><text x="' + (L - 5) + '" y="' + (gy + 4) + '" font-size="10" text-anchor="end" fill="currentColor" fill-opacity=".55">' + fmt(gv) + '</text>'; }
+    data.forEach(function (p, i) { if (i % 7 === 2 || i === n - 1) s += '<text x="' + x(i) + '" y="' + (H - 6) + '" font-size="10" text-anchor="middle" fill="currentColor" fill-opacity=".55">' + fmtShort(p.d) + '</text>'; });
+    if (o.bar) {
+      var bw = pw / n * 0.68;
+      data.forEach(function (p, i) { if (p.v) s += '<rect x="' + (x(i) - bw / 2) + '" y="' + y(p.v) + '" width="' + bw + '" height="' + (y(0) - y(p.v)) + '" rx="2" fill="' + o.color + '"><title>' + fmtShort(p.d) + ': ' + p.v + '</title></rect>'; });
+    } else {
+      var pts = data.map(function (p, i) { return p.v == null ? null : [x(i), y(p.v), p]; }).filter(Boolean);
+      if (pts.length > 1) {
+        var path = pts.map(function (q, i) { return (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1); }).join(' ');
+        s += '<path d="' + path + ' L' + pts[pts.length - 1][0].toFixed(1) + ' ' + (T + ph) + ' L' + pts[0][0].toFixed(1) + ' ' + (T + ph) + ' Z" fill="' + o.color + '" fill-opacity=".10"/>';
+        s += '<path d="' + path + '" fill="none" stroke="' + o.color + '" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+      }
+      pts.forEach(function (q) { s += '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="3.5" fill="' + o.color + '"><title>' + fmtShort(q[2].d) + ': ' + q[2].v + '</title></circle>'; });
+      var lp = pts[pts.length - 1];
+      s += '<text x="' + lp[0] + '" y="' + (lp[1] - 8) + '" font-size="11" font-weight="700" text-anchor="end" fill="' + o.color + '">' + lp[2].v + '</text>';
+    }
+    s += '</svg>';
+    var avg = vals.reduce(function (a, b) { return a + b; }, 0) / vals.length;
+    var sum = '<div class="sum"><span>ממוצע: <b>' + (Math.round(avg * 10) / 10) + '</b> ' + o.unit + '</span>';
+    if (o.bar) sum += '<span>סה״כ: <b>' + Math.round(vals.reduce(function (a, b) { return a + b; }, 0)) + '</b> ' + o.unit + '</span><span>ימי ספורט: <b>' + vals.filter(Boolean).length + '</b></span>';
+    else { sum += '<span>אחרון: <b>' + vals[vals.length - 1] + '</b> ' + o.unit + '</span>'; if (vals.length > 1) { var ch = Math.round((vals[vals.length - 1] - vals[0]) * 10) / 10; sum += '<span>שינוי: <b dir="ltr">' + (ch > 0 ? '+' : '') + ch + '</b></span>'; } }
+    return s + sum + '</div>';
+  }
+  function renderCharts() {
+    $('chWeight').innerHTML = chart(series(function (e) { return num(e.weight); }), { color: '#0ea5e9', unit: 'ק"ג', label: 'משקל', minPad: 1 });
+    $('chSleep').innerHTML = chart(series(function (e) { return num(e.sleep); }), { color: '#8b5cf6', unit: 'שעות', label: 'שינה', minPad: 0.5, floor0: true });
+    $('chEx').innerHTML = chart(series(function (e) { return totals(e).ex || 0; }), { color: '#0f9d76', unit: 'דק׳', label: 'דקות ספורט', bar: true });
+  }
+
+  // ---------- views ----------
+  function showView(v) {
+    document.querySelectorAll('.view').forEach(function (s) { s.classList.toggle('active', s.id === 'view-' + v); });
+    document.querySelectorAll('.tab').forEach(function (t) { t.classList.toggle('active', t.dataset.view === v); });
+    if (v === 'day') renderDay(); else if (v === 'history') renderHistory(); else if (v === 'charts') renderCharts();
+    window.scrollTo(0, 0);
+  }
+  document.querySelectorAll('.tab').forEach(function (t) { t.onclick = function () { persist(true); showView(t.dataset.view); }; });
+
+  // ---------- voice ----------
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var NB = window.AndroidBridge || null; // native Android wrapper (SpeechRecognizer he-IL)
+  var NATIVE = false;
+  try { NATIVE = !!(NB && NB.isSpeechAvailable()); } catch (e) { NATIVE = false; }
+  var HAS_SPEECH = NATIVE || !!SR;
+  var rec = null, listening = false, baseText = '', nativeFinal = '', parsed = null, parseT;
+  function showText(extra) { $('vText').value = (baseText + ' ' + nativeFinal + ' ' + (extra || '')).replace(/\s+/g, ' ').trim(); autoGrow($('vText')); renderPreview(); }
+  var speechSink = null; // the guided check-in takes over native speech callbacks while open
+  window.__nativeSpeech = {};
+  ['onReady', 'onPartial', 'onFinal', 'onError', 'onEnd'].forEach(function (k) { window.__nativeSpeech[k] = function (a) { var s = speechSink || voiceSink; if (s[k]) s[k](a); }; });
+  var voiceSink = {
+    onReady: function () { if (listening) setRecUI(); },
+    onPartial: function (t) { if (listening) showText(t); },
+    onFinal: function (t) { nativeFinal += ' ' + t; showText(''); },
+    onError: function (m) { listening = false; setRecUI(m); },
+    onEnd: function () { if (listening) { listening = false; setRecUI('עיבדתי את מה שאמרת – בדוק למטה 👇'); } renderPreview(); }
+  };
+  function defaultMeal() { return 'snacks'; }
+  function li(k, v, cls) { return '<li' + (cls ? ' class="' + cls + '"' : '') + '><span class="k">' + k + '</span><span>' + v + '</span></li>'; }
+  function renderPreview() {
+    parsed = HealthParser.parse($('vText').value, { defaultMeal: defaultMeal() });
+    var h = '';
+    MEALS.forEach(function (m) { var x = parsed.meals[m[0]]; if (x) h += li(m[2] + ' ' + m[1] + ':', esc(x.text || '') + (x.cal != null ? ' <span class="muted">(' + x.cal + ' קל׳)</span>' : '')); });
+    parsed.exercises.forEach(function (x) { h += li('🏃 ספורט:', esc(x.type) + (x.minutes != null ? ' · ' + x.minutes + ' דק׳' : ' <span class="muted">(בלי משך)</span>') + (x.detail ? ' <span class="muted">· ' + esc(x.detail) + '</span>' : '')); });
+    if (parsed.sleep != null) h += li('😴 שינה:', parsed.sleep + ' שעות');
+    if (parsed.water != null) h += li('💧 מים:', parsed.water + ' כוסות');
+    if (parsed.weight != null) h += li('⚖️ משקל:', parsed.weight + ' ק"ג');
+    if (parsed.mood != null) h += li('🙂 מצב רוח:', MOODS[parsed.mood - 1][1] + ' ' + MOODS[parsed.mood - 1][2]);
+    if (parsed.notes.length) h += li('📝 להערות:', esc(parsed.notes.join(' · ')), 'note');
+    $('vPreview').innerHTML = h || '<li class="note"><span>עוד לא זיהיתי כלום. דבר או הקלד…</span></li>';
+    $('vApply').disabled = !h;
+  }
+  function setRecUI(msg) { $('recBtn').classList.toggle('on', listening); $('recBtn').textContent = listening ? '⏹' : '🎤'; $('recStatus').textContent = msg || (listening ? 'מקשיב… דבר חופשי, ולחץ לסיום' : 'לחץ כדי להתחיל לדבר'); }
+  function startRec() {
+    if (listening) return;
+    if (NATIVE) {
+      baseText = $('vText').value.trim(); nativeFinal = '';
+      listening = true; setRecUI('מתחבר למיקרופון…');
+      try { NB.startSpeech(); } catch (e) { listening = false; setRecUI('לא הצלחתי להפעיל את המיקרופון: ' + e.message); }
+      return;
+    }
+    if (!SR) return;
+    try {
+      rec = new SR();
+      rec.lang = 'he-IL'; rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+      baseText = $('vText').value.trim();
+      rec.onresult = function (ev) {
+        var fin = '', interim = '';
+        for (var i = 0; i < ev.results.length; i++) { var r = ev.results[i]; if (r.isFinal) fin += ' ' + r[0].transcript; else interim += ' ' + r[0].transcript; }
+        $('vText').value = (baseText + ' ' + fin + ' ' + interim).replace(/\s+/g, ' ').trim();
+        autoGrow($('vText')); renderPreview();
+      };
+      rec.onerror = function (ev) {
+        var m = { 'not-allowed': 'אין הרשאה למיקרופון. אשר גישה למיקרופון בהגדרות הדפדפן.', 'service-not-allowed': 'זיהוי הדיבור חסום בדפדפן הזה. נסה Chrome או Safari.', 'no-speech': 'לא שמעתי כלום – נסה שוב.', 'audio-capture': 'לא נמצא מיקרופון.', 'network': 'זיהוי הדיבור דורש חיבור לאינטרנט בדפדפן הזה.', 'language-not-supported': 'עברית לא נתמכת בזיהוי הדיבור כאן.' }[ev.error];
+        listening = false; setRecUI(m || ('שגיאה בזיהוי דיבור: ' + ev.error));
+      };
+      rec.onend = function () { var was = listening; listening = false; if (was) setRecUI(); renderPreview(); };
+      rec.start(); listening = true; setRecUI();
+    } catch (e) { listening = false; setRecUI('לא הצלחתי להפעיל את המיקרופון: ' + e.message); }
+  }
+  function stopRec() {
+    if (NATIVE) { if (listening) { listening = false; try { NB.stopSpeech(); } catch (e) { } setRecUI('עיבדתי את מה שאמרת – בדוק למטה 👇'); } return; }
+    if (rec && listening) { listening = false; try { rec.stop(); } catch (e) { } setRecUI('עיבדתי את מה שאמרת – בדוק למטה 👇'); } }
+  function openVoice() {
+    $('vText').value = ''; autoGrow($('vText'));
+    $('vTarget').textContent = 'יתווסף ליום: ' + fmtLong(current) + ' (' + relLabel(current) + ')';
+    $('voiceOverlay').classList.add('open');
+    $('vUnsupported').classList.toggle('hidden', HAS_SPEECH);
+    $('recWrap').classList.toggle('hidden', !HAS_SPEECH);
+    renderPreview();
+    if (HAS_SPEECH) { setRecUI(); startRec(); } else $('vText').focus();
+  }
+  function closeVoice() { stopRec(); $('voiceOverlay').classList.remove('open'); }
+  $('micFab').onclick = openVoice;
+  $('recBtn').onclick = function () { if (listening) stopRec(); else startRec(); };
+  $('vCancel').onclick = closeVoice;
+  $('voiceOverlay').addEventListener('click', function (ev) { if (ev.target === this) closeVoice(); });
+  $('vText').addEventListener('input', function () { autoGrow(this); clearTimeout(parseT); parseT = setTimeout(renderPreview, 200); });
+  $('vApply').onclick = function () {
+    stopRec(); renderPreview();
+    applyParsed(entry(current), parsed);
+    persist(true);
+    $('voiceOverlay').classList.remove('open');
+    showView('day');
+    toast('נוסף ליומן ✓');
+  };
+
+  /** merge a HealthParser.parse() result into a day entry (used by voice dictation and by car entries) */
+  function applyParsed(e, p) {
+    MEALS.forEach(function (m) {
+      var x = p.meals[m[0]]; if (!x) return;
+      var tgt = e.meals[m[0]];
+      if (x.text) tgt.text = tgt.text.trim() ? tgt.text.trim() + ', ' + x.text : x.text;
+      if (x.cal != null) tgt.cal = String((num(tgt.cal) || 0) + x.cal);
+    });
+    p.exercises.forEach(function (x) { e.exercises.push({ type: x.type, minutes: x.minutes == null ? '' : String(x.minutes), detail: x.detail || '' }); });
+    if (p.weight != null) e.weight = String(p.weight);
+    if (p.sleep != null) e.sleep = String(p.sleep);
+    if (p.water != null) e.water = p.water;
+    if (p.mood != null) e.mood = p.mood;
+    if (p.notes.length) e.notes = (e.notes.trim() ? e.notes.trim() + '\n' : '') + p.notes.join('. ');
+  }
+
+  // ---------- guided check-in ("שאל אותי על היום") ----------
+  var ANS = HealthParser.answers;
+  var MUTE_KEY = 'healthJournal.moshe.ttsMuted';
+  var ci = null; // { plan:[idx], pos, ans:{}, hist:[], follow:null }
+  var ciTimer = null, ciListening = false, ciHeard = '', ciErr = '', ciRec = null, ciTtsId = 0, ciTtsPending = null;
+  var ciMuted = false; try { ciMuted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) { }
+  function recent(field, days) {
+    for (var i = 0; i < days; i++) { var x = db.entries[addDays(current, -i)]; if (x && str(x[field]).trim() !== '') return true; }
+    return false;
+  }
+  function dayLbl() { var r = relLabel(current); return typeof r === 'string' ? r : fmtShort(current); }
+  function ynLabel(v, yes, no) { return v ? yes : no; }
+  function foodExtras() { return (ci && ci.ans.food && ci.ans.food.value && ci.ans.food.value.extras) || {}; }
+  var QS = [
+    { id: 'food', q: 'מה אכלת היום?', say: 'היי משה, כמה שאלות קצרות על היום. מה אכלת היום?', sub: 'ספר חופשי, למשל: חביתה בבוקר, שניצל וסלט בצהריים', quick: [['לא אכלתי עדיין', 'כלום']],
+      parse: function (t) {
+        var r = ANS.food(t), meals = {}, n = 0, x = {};
+        MEALS.forEach(function (m) { var v = r.meals[m[0]]; if (v && v.text) { meals[m[0]] = v.text; n++; } });
+        var mv = 0, anyMv = false; r.exercises.forEach(function (e) { if (e.minutes != null) { mv += e.minutes; anyMv = true; } });
+        if (anyMv) x.movement = mv;
+        if (r.water != null) x.water = r.water; if (r.sleep != null) x.sleep = r.sleep; if (r.weight != null) x.weight = r.weight; if (r.mood != null) x.mood = r.mood;
+        var notes = r.notes.filter(function (s) { return s.length > 2; });
+        if (!n && !Object.keys(x).length && !notes.length) return ANS.notes(t) === '' ? { value: { meals: {}, extras: {}, notes: [] }, label: 'בסדר' } : null;
+        return { value: { meals: meals, extras: x, notes: notes }, label: n ? MEALS.filter(function (m) { return meals[m[0]]; }).map(function (m) { return m[2] + ' ' + meals[m[0]]; }).join(' · ') : 'רשמתי' };
+      } },
+    { id: 'breakfast', q: 'אכלת ארוחת בוקר?', yn: true, when: function () { return !(ci.ans.food && ci.ans.food.value.meals.breakfast); },
+      parse: function (t) { var v = ANS.yesNo(t); return v == null ? null : { value: v, label: ynLabel(v, 'אכלת ארוחת בוקר', 'בלי ארוחת בוקר היום') }; } },
+    { id: 'onePlate', q: 'הקפדת על צלחת אחת – חצי ירקות?', yn: true,
+      parse: function (t) { var v = ANS.yesNo(t); return v == null ? null : { value: v, label: ynLabel(v, 'כן', 'לא היום – זה בסדר') }; } },
+    { id: 'movement', q: 'כמה דקות תנועה או הליכה היו היום?', quick: [['0', '0'], ['15', '15'], ['30', '30'], ['45', '45'], ['60+', '60']], when: function () { return foodExtras().movement == null; },
+      parse: function (t) { var v = ANS.minutes(t); return v == null ? null : { value: v, label: v + ' דקות' }; } },
+    { id: 'sleep', q: 'באיזו שעה הלכת לישון אתמול, וכמה ישנת?', sub: 'למשל: באחת עשרה, שבע שעות',
+      parse: function (t) { var v = ANS.sleep(t); if (!v.bedtime && v.hours == null) return null; return { value: v, label: (v.bedtime ? 'לישון ב-' + v.bedtime : '') + (v.bedtime && v.hours != null ? ' · ' : '') + (v.hours != null ? v.hours + ' שעות שינה' : '') }; } },
+    { id: 'mood', q: 'איך מצב הרוח היום, מ-1 עד 5?', moodQuick: true, when: function () { return foodExtras().mood == null; },
+      parse: function (t) { var v = ANS.mood(t); return v == null ? null : { value: v, label: MOODS[v - 1][1] + ' ' + MOODS[v - 1][2] }; } },
+    { id: 'spiral', q: 'היה היום סחרור או לופ מחשבתי?', yn: true,
+      parse: function (t) { var v = ANS.yesNo(t); return v == null ? null : { value: v, label: v ? 'רשמתי. תודה ששיתפת 💚' : 'רשמתי – בלי לופ' }; } },
+    { id: 'water', q: 'כמה כוסות מים שתית?', quick: [['2', '2'], ['4', '4'], ['6', '6'], ['8', '8'], ['10', '10']], when: function () { return foodExtras().water == null; },
+      parse: function (t) { var v = ANS.water(t); return v == null ? null : { value: v, label: v + ' כוסות' }; } },
+    { id: 'weight', q: 'מה המשקל שלך היום?', sub: 'פעם בשבוע מספיק', yesNoSkip: true, when: function () { return foodExtras().weight == null && !recent('weight', 7); },
+      parse: function (t) { var v = ANS.weight(t); if (v == null) return ANS.yesNo(t) === false ? { value: null, label: 'בסדר, בפעם אחרת' } : null; return { value: v, label: v + ' ק"ג' }; } },
+    { id: 'bp', q: 'רוצה לרשום לחץ דם?', sub: 'מדידה אחת מספיקה, למשל: 130 על 85', yn: true, when: function () { return !recent('bloodPressure', 3); },
+      parse: function (t) {
+        var v = ANS.bloodPressure(t);
+        if (v) return { value: v, label: v };
+        var y = ANS.yesNo(t);
+        if (y === false) return { value: null, label: 'בסדר, לא הפעם' };
+        if (y === true) return { follow: { q: 'מה הייתה המדידה?', sub: 'למשל: 130 על 85', parse: function (t2) { var b = ANS.bloodPressure(t2); if (b) return { value: b, label: b }; return ANS.yesNo(t2) === false ? { value: null, label: 'בסדר' } : null; } } };
+        return null;
+      } },
+    { id: 'notes', q: 'משהו נוסף שחשוב לך לרשום?', quick: [['לא, זהו', 'לא']],
+      parse: function (t) { var v = ANS.notes(t); return { value: v, label: v ? 'רשמתי' : 'סיימנו 🙂' }; } }
+  ];
+
+  /* ---- text-to-speech: native he-IL on Android, speechSynthesis in browser, else text only ---- */
+  window.__nativeTts = {
+    onDone: function (id) { if (ciTtsPending && ciTtsPending.id === id) ciTtsPending.fin(); },
+    onError: function (id) { if (ciTtsPending && ciTtsPending.id === id) ciTtsPending.fin(); },
+    onStart: function () { }, onStop: function () { }
+  };
+  var heVoice = null;
+  function findHeVoice() {
+    if (!('speechSynthesis' in window)) return null;
+    var vs = window.speechSynthesis.getVoices() || [];
+    for (var i = 0; i < vs.length; i++) if (/^(he|iw)([-_]|$)/i.test(vs[i].lang)) return vs[i];
+    return null;
+  }
+  if ('speechSynthesis' in window) { heVoice = findHeVoice(); try { window.speechSynthesis.addEventListener('voiceschanged', function () { heVoice = findHeVoice(); }); } catch (e) { } }
+  function stopTts() {
+    ciTtsId++; ciTtsPending = null;
+    try { if (NB && NB.stopSpeaking) NB.stopSpeaking(); } catch (e) { }
+    try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (e) { }
+  }
+  /** speak text, then call cb once speech is finished (never while the mic is open) */
+  function speak(text, cb, waited) {
+    var id = 'ci' + (++ciTtsId), done = false, guard;
+    var fin = function () { if (done) return; done = true; clearTimeout(guard); if (ciTtsPending && ciTtsPending.id === id) ciTtsPending = null; if (id === 'ci' + ciTtsId) setTimeout(function () { if (id === 'ci' + ciTtsId) cb(); }, 450); };
+    if (ciMuted) return fin();
+    var st = 'none';
+    try { st = NB && NB.ttsStatus ? NB.ttsStatus() : 'none'; } catch (e) { st = 'none'; }
+    if (st === 'init' && (waited || 0) < 2500) { var tok = --ciTtsId; setTimeout(function () { if (ci && tok === ciTtsId) speak(text, cb, (waited || 0) + 250); }, 250); return; }
+    if (st === 'ready') {
+      ciTtsPending = { id: id, fin: fin };
+      setStatus('🔊 שואל…');
+      var ok = false; try { ok = NB.speak(text, id); } catch (e) { ok = false; }
+      if (!ok) return fin();
+      guard = setTimeout(fin, 3000 + text.length * 120);
+      return;
+    }
+    if (heVoice && 'speechSynthesis' in window) {
+      try {
+        var u = new SpeechSynthesisUtterance(text); u.lang = heVoice.lang; u.voice = heVoice; u.rate = 1;
+        u.onend = fin; u.onerror = fin;
+        window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);
+        setStatus('🔊 שואל…');
+        guard = setTimeout(fin, 3000 + text.length * 120);
+        return;
+      } catch (e) { }
+    }
+    fin(); // no Hebrew voice: question is shown as text only
+  }
+
+  /* ---- listening (single utterance) ---- */
+  function setStatus(msg, cls) { var el = $('ciStatus'); el.textContent = msg || ''; el.className = 'ci-status' + (cls ? ' ' + cls : ''); }
+  function setGot(msg, ok) { var el = $('ciGot'); el.textContent = msg || ''; el.className = 'ci-got' + (ok ? ' ok' : ''); }
+  var ciSink = {
+    onReady: function () { if (ciListening) setStatus('מקשיב… ענה בקול', 'listen'); },
+    onPartial: function (t) { if (ciListening) { $('ciText').value = (ciHeard + ' ' + t).trim(); autoGrow($('ciText')); } },
+    onFinal: function (t) { if (!ciListening) return; ciHeard = (ciHeard + ' ' + t).trim(); $('ciText').value = ciHeard; autoGrow($('ciText')); },
+    onError: function (m) { ciErr = m || 'לא הצלחתי לשמוע'; },
+    onEnd: function () {
+      if (!ciListening) return;
+      ciListening = false;
+      if (ciHeard) { handleAnswer(ciHeard, 'voice'); return; }
+      setStatus('');
+      setGot((ciErr || 'לא שמעתי תשובה').replace(/\s*[–-]\s*נסה שוב\.?$/, '') + ' – אפשר ללחוץ 🎤 ולנסות שוב, להקליד, או לדלג.');
+      $('ciMic').textContent = '🎤 נסה שוב';
+    }
+  };
+  function stopListening() {
+    if (!ciListening) return;
+    ciListening = false;
+    if (NATIVE) { try { NB.stopSpeech(); } catch (e) { } }
+    else if (ciRec) { try { ciRec.abort(); } catch (e) { } }
+    ciRec = null;
+  }
+  function listen() {
+    if (!ci || ci.stage !== 'ask') return;
+    if (!HAS_SPEECH) { setStatus('אפשר להקליד או לבחור תשובה'); return; }
+    stopListening();
+    ciHeard = ''; ciErr = ''; ciListening = true;
+    $('ciMic').textContent = '🎤 דבר שוב';
+    setStatus('מתחבר למיקרופון…', 'listen');
+    if (NATIVE) {
+      speechSink = ciSink;
+      try { if (NB.startSpeechOnce) NB.startSpeechOnce(); else NB.startSpeech(); }
+      catch (e) { ciListening = false; setStatus(''); setGot('לא הצלחתי להפעיל את המיקרופון – אפשר להקליד.'); }
+      return;
+    }
+    try {
+      var r = ciRec = new SR();
+      r.lang = 'he-IL'; r.continuous = false; r.interimResults = true; r.maxAlternatives = 1;
+      r.onstart = function () { ciSink.onReady(); };
+      r.onresult = function (ev) {
+        var fin = '', interim = '';
+        for (var i = ev.resultIndex; i < ev.results.length; i++) { var x = ev.results[i]; if (x.isFinal) fin += ' ' + x[0].transcript; else interim += ' ' + x[0].transcript; }
+        if (fin.trim()) ciSink.onFinal(fin.trim());
+        if (interim.trim()) ciSink.onPartial(interim.trim());
+      };
+      r.onerror = function (ev) {
+        ciSink.onError({ 'not-allowed': 'אין הרשאה למיקרופון', 'service-not-allowed': 'זיהוי הדיבור חסום בדפדפן הזה', 'no-speech': 'לא שמעתי תשובה', 'audio-capture': 'לא נמצא מיקרופון', 'network': 'זיהוי הדיבור צריך אינטרנט' }[ev.error] || 'שגיאה בזיהוי דיבור');
+      };
+      r.onend = function () { if (ciRec === r) { ciRec = null; ciSink.onEnd(); } };
+      r.start();
+    } catch (e) { ciListening = false; setStatus(''); setGot('לא הצלחתי להפעיל את המיקרופון – אפשר להקליד.'); }
+  }
+
+  /* ---- flow ---- */
+  function curQ() { return ci.follow || QS[ci.plan[ci.pos]]; }
+  function cancelAuto() { clearTimeout(ciTimer); ciTimer = null; }
+  function haltIO() { cancelAuto(); stopTts(); stopListening(); }
+  function openCheckin() {
+    persist(true);
+    var plan = [];
+    QS.forEach(function (q, i) { if (q.id === 'weight' && recent('weight', 7)) return; if (q.id === 'bp' && recent('bloodPressure', 3)) return; plan.push(i); });
+    ci = { plan: plan, pos: -1, ans: {}, hist: [], follow: null, stage: 'ask' };
+    $('ciMute').textContent = ciMuted ? '🔇' : '🔊';
+    $('ciAsk').classList.remove('hidden'); $('ciSum').classList.add('hidden');
+    $('ciOverlay').classList.add('open');
+    nextQ();
+  }
+  function closeCheckin() {
+    haltIO(); speechSink = null; ci = null;
+    $('ciOverlay').classList.remove('open');
+  }
+  function nextQ() {
+    haltIO();
+    if (ci.pos >= 0 && !ci.follow) ci.hist.push(ci.pos);
+    ci.follow = null;
+    var p = ci.pos + 1;
+    while (p < ci.plan.length && QS[ci.plan[p]].when && !QS[ci.plan[p]].when()) p++;
+    if (p >= ci.plan.length) return showSummary();
+    ci.pos = p;
+    ask(true);
+  }
+  function prevQ() {
+    haltIO();
+    if (ci.follow) { ci.follow = null; ask(true); return; }
+    if (!ci.hist.length) return;
+    ci.pos = ci.hist.pop();
+    ask(true);
+  }
+  function ask(speakIt) {
+    var q = curQ(), base = QS[ci.plan[ci.pos]];
+    ci.stage = 'ask';
+    $('ciStep').textContent = 'שאלה ' + (ci.pos + 1) + ' מתוך ' + ci.plan.length + ' · ' + dayLbl();
+    $('ciBarFill').style.width = Math.round(ci.pos / ci.plan.length * 100) + '%';
+    $('ciQ').textContent = q.q;
+    $('ciSub').textContent = q.sub || '';
+    var quick = [];
+    if (q.yn || (ci.follow && base.yn)) quick = q.parse === base.parse ? [['כן', 'כן'], ['לא', 'לא']] : [];
+    if (q.quick) quick = q.quick;
+    var h = quick.map(function (b) { return '<button data-ans="' + esc(b[1]) + '">' + esc(b[0]) + '</button>'; }).join('');
+    if (q.moodQuick && !ci.follow) h = MOODS.map(function (m) { return '<button class="mood-q" data-ans="' + m[0] + '" title="' + m[2] + '" aria-label="' + m[0] + ' – ' + m[2] + '">' + m[1] + '</button>'; }).join('');
+    $('ciQuick').innerHTML = h;
+    var prev = ci.follow ? null : ci.ans[base.id];
+    $('ciText').value = prev && prev.raw ? prev.raw : ''; autoGrow($('ciText'));
+    setGot(prev && prev.label ? '✓ ' + prev.label : '', !!prev);
+    $('ciBack').style.visibility = ci.hist.length || ci.follow ? 'visible' : 'hidden';
+    $('ciMic').classList.toggle('hidden', !HAS_SPEECH);
+    $('ciMic').textContent = '🎤 דבר שוב';
+    setStatus('');
+    if (speakIt) speak(ci.pos === 0 && !ci.follow && q.say ? q.say : q.q, listen);
+  }
+  /** returns true when understood */
+  function handleAnswer(text, src) {
+    if (!ci || ci.stage !== 'ask') return false;
+    cancelAuto();
+    text = String(text || '').trim();
+    var q = curQ(), base = QS[ci.plan[ci.pos]];
+    setStatus('');
+    if (!text) { nextQ(); return true; }
+    if (ANS.isSkip(text)) { setGot('דילגנו'); ciTimer = setTimeout(nextQ, 500); return true; }
+    if (/^(?:סיים|סיום|לסיכום|מספיק להיום|סיימתי)[.!]?$/.test(text)) { showSummary(); return true; }
+    var r = q.parse(text);
+    if (!r) {
+      setGot('לא בטוח שהבנתי 🙂 אפשר לנסות שוב, להקליד, או לדלג.');
+      $('ciMic').textContent = '🎤 נסה שוב';
+      return false;
+    }
+    if (r.follow) { ci.follow = r.follow; ask(true); return true; }
+    r.raw = ci.follow ? (ci.ans[base.id] && ci.ans[base.id].raw) || text : text;
+    ci.ans[base.id] = r;
+    setGot('✓ ' + r.label, true);
+    ciTimer = setTimeout(nextQ, src === 'voice' ? 1300 : src === 'quick' ? 450 : 0);
+    return true;
+  }
+
+  /* ---- summary (editable) ---- */
+  function draft() {
+    var a = ci.ans, x = foodExtras(), v = function (id) { return a[id] ? a[id].value : undefined; };
+    var d = { meals: (a.food && a.food.value.meals) || {}, breakfast: null, onePlate: null, spiral: null, movement: '', bedtime: '', sleep: '', mood: 0, water: '', weight: '', bloodPressure: '', notes: '' };
+    var fx = a.food ? a.food.value.extras : {};
+    if (v('breakfast') != null) d.breakfast = v('breakfast'); else if (d.meals.breakfast) d.breakfast = true;
+    if (v('onePlate') != null) d.onePlate = v('onePlate');
+    if (v('spiral') != null) d.spiral = v('spiral');
+    var mv = v('movement') != null ? v('movement') : fx.movement; if (mv != null) d.movement = String(mv);
+    var sl = v('sleep'); if (sl) { if (sl.bedtime) d.bedtime = sl.bedtime; if (sl.hours != null) d.sleep = String(sl.hours); }
+    if (d.sleep === '' && fx.sleep != null) d.sleep = String(fx.sleep);
+    var md = v('mood') != null ? v('mood') : fx.mood; if (md) d.mood = md;
+    var w = v('water') != null ? v('water') : fx.water; if (w != null) d.water = String(w);
+    var kg = v('weight') != null ? v('weight') : fx.weight; if (kg != null) d.weight = String(kg);
+    if (v('bp')) d.bloodPressure = v('bp');
+    var notes = [].concat(a.food ? a.food.value.notes : []); if (v('notes')) notes.push(v('notes'));
+    d.notes = notes.join('. ');
+    return d;
+  }
+  function showSummary() {
+    haltIO();
+    ci.stage = 'sum';
+    var d = draft(), h = '';
+    $('ciStep').textContent = 'סיכום · ' + dayLbl();
+    $('ciBarFill').style.width = '100%';
+    $('ciSumTarget').textContent = 'יישמר ביום: ' + fmtLong(current) + ' · אפשר לתקן כל שדה לפני השמירה';
+    var row = function (label, input) { return '<label class="sum-row"><span>' + label + '</span>' + input + '</label>'; };
+    MEALS.forEach(function (m) { if (d.meals[m[0]]) h += row(m[2] + ' ' + m[1], '<textarea rows="1" data-s="meal-' + m[0] + '">' + esc(d.meals[m[0]]) + '</textarea>'); });
+    h += TRI.map(function (t) { return triRow(t[0], t[1], d[t[0]], 'data-stri'); }).join('');
+    h += '<div class="grid2">' + row('🚶 דקות תנועה', '<input type="number" min="0" inputmode="numeric" data-s="movement" placeholder="—" value="' + esc(d.movement) + '">') +
+      row('💧 כוסות מים', '<input type="number" min="0" inputmode="numeric" data-s="water" placeholder="—" value="' + esc(d.water) + '">') +
+      row('🌙 הלכתי לישון', '<input type="time" data-s="bedtime" value="' + esc(d.bedtime) + '">') +
+      row('😴 שעות שינה', '<input type="number" step="0.5" min="0" max="24" inputmode="decimal" data-s="sleep" placeholder="—" value="' + esc(d.sleep) + '">') + '</div>';
+    if (d.weight !== '' || ci.ans.weight || ci.plan.indexOf(8) >= 0) h += row('⚖️ משקל (ק"ג)', '<input type="number" step="0.1" min="0" inputmode="decimal" data-s="weight" placeholder="—" value="' + esc(d.weight) + '">');
+    if (d.bloodPressure || ci.ans.bp || ci.plan.indexOf(9) >= 0) h += row('🩺 לחץ דם', '<input type="text" dir="ltr" inputmode="numeric" data-s="bloodPressure" placeholder="130/85" value="' + esc(d.bloodPressure) + '">');
+    h += '<div class="sum-row"><span>🙂 מצב רוח</span><div class="moods">' + MOODS.map(function (m) { return '<button class="mood' + (d.mood === m[0] ? ' sel' : '') + '" data-smood="' + m[0] + '" aria-label="' + m[2] + '">' + m[1] + '</button>'; }).join('') + '</div></div>';
+    h += row('📝 הערות', '<textarea rows="2" data-s="notes" placeholder="—">' + esc(d.notes) + '</textarea>');
+    $('ciSumBody').innerHTML = h;
+    $('ciSumBody').querySelectorAll('textarea').forEach(autoGrow);
+    ci.sum = d;
+    $('ciAsk').classList.add('hidden'); $('ciSum').classList.remove('hidden');
+    speak('תודה! הנה סיכום קצר. אפשר לתקן, ואז לשמור.', function () { });
+  }
+  $('ciSumBody').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b || !ci) return;
+    ev.preventDefault();
+    if (b.dataset.stri) { var k = b.dataset.stri, v = b.dataset.v === 'yes'; ci.sum[k] = ci.sum[k] === v ? null : v; setTriUI($('ciSumBody'), 'data-stri', k, ci.sum[k]); }
+    else if (b.dataset.smood) { var m = +b.dataset.smood; ci.sum.mood = ci.sum.mood === m ? 0 : m; $('ciSumBody').querySelectorAll('[data-smood]').forEach(function (x) { x.classList.toggle('sel', +x.dataset.smood === ci.sum.mood); }); }
+  });
+  $('ciSumBody').addEventListener('input', function (ev) { if (ev.target.tagName === 'TEXTAREA') autoGrow(ev.target); });
+  function saveCheckin() {
+    if (!ci || !ci.sum) return;
+    var d = ci.sum, e = entry(current), val = function (k) { var el = $('ciSumBody').querySelector('[data-s="' + k + '"]'); return el ? el.value.trim() : ''; };
+    MEALS.forEach(function (m) {
+      var t = val('meal-' + m[0]); if (!t) return;
+      var tgt = e.meals[m[0]], cur = tgt.text.trim();
+      if (cur.indexOf(t) < 0) tgt.text = cur ? cur + ', ' + t : t;
+    });
+    TRI.forEach(function (t) { if (d[t[0]] != null) e[t[0]] = d[t[0]]; });
+    ['movement', 'bedtime', 'sleep', 'weight', 'bloodPressure'].forEach(function (k) { var v = val(k); if (v !== '') e[k] = v; });
+    var w = val('water'); if (w !== '' && !isNaN(parseInt(w, 10))) e.water = Math.max(0, parseInt(w, 10));
+    if (d.mood) e.mood = d.mood;
+    var n = val('notes'); if (n && e.notes.indexOf(n) < 0) e.notes = (e.notes.trim() ? e.notes.trim() + '\n' : '') + n;
+    persist(true);
+    closeCheckin();
+    showView('day');
+    toast('נשמר ביומן ✓ תודה ששיתפת 💚');
+  }
+
+  /* ---- wiring ---- */
+  $('ciStart').onclick = openCheckin;
+  $('ciClose').onclick = closeCheckin;
+  $('ciCancel').onclick = closeCheckin;
+  $('ciSave').onclick = saveCheckin;
+  $('ciMute').onclick = function () {
+    ciMuted = !ciMuted; this.textContent = ciMuted ? '🔇' : '🔊';
+    try { localStorage.setItem(MUTE_KEY, ciMuted ? '1' : '0'); } catch (e) { }
+    if (ciMuted && ciTtsPending) { var f = ciTtsPending.fin; stopTts(); ciTtsId--; f(); }
+  };
+  $('ciNext').onclick = function () {
+    if (!ci) return;
+    var t = $('ciText').value.trim(), base = QS[ci.plan[ci.pos]], prev = ci.ans[base.id];
+    stopListening(); stopTts();
+    if (!t) { nextQ(); return; }
+    if (!ci.follow && prev && prev.raw === t) { nextQ(); return; } // already handled
+    handleAnswer(t, 'typed');
+  };
+  $('ciSkip').onclick = function () { if (ci) { var base = QS[ci.plan[ci.pos]]; delete ci.ans[base.id]; nextQ(); } };
+  $('ciBack').onclick = function () { if (ci) prevQ(); };
+  $('ciFinish').onclick = function () { if (ci) showSummary(); };
+  $('ciMic').onclick = function () { if (ci) { cancelAuto(); stopTts(); setGot(''); $('ciText').value = ''; listen(); } };
+  $('ciQuick').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b || !ci) return;
+    stopListening(); stopTts();
+    $('ciText').value = b.dataset.ans;
+    handleAnswer(b.dataset.ans, 'quick');
+  });
+  $('ciText').addEventListener('focus', function () { cancelAuto(); stopTts(); stopListening(); setStatus(''); });
+  $('ciText').addEventListener('input', function () { cancelAuto(); autoGrow(this); });
+  $('ciText').addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); $('ciNext').click(); } });
+  $('ciOverlay').addEventListener('click', function (ev) { if (ev.target === this && ci && ci.stage === 'ask') closeCheckin(); });
+  function ciPause() { if (ci) { haltIO(); if (ci.stage === 'ask') setStatus('אפשר ללחוץ 🎤 כדי להמשיך'); } }
+  document.addEventListener('visibilitychange', function () { if (document.hidden) ciPause(); });
+  window.addEventListener('pagehide', ciPause);
+
+  // ---------- car mode: hands-free entries from the steering-wheel button / widget ----------
+  var CAR = !!(NB && NB.carQueuePeek), carT = null;
+  function hhmmOf(ts) { var d = new Date(ts); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  /** pull entries saved by the native service (durable queue) into localStorage; ack only after a successful save */
+  function mergeCarQueue() {
+    if (!CAR) return 0;
+    var q;
+    try { q = JSON.parse(NB.carQueuePeek() || '[]'); } catch (err) { return 0; }
+    if (!Array.isArray(q) || !q.length) return 0;
+    var now = Date.now(), done = [], added = 0, next = Infinity, days = {};
+    q.forEach(function (it) {
+      if (!it || !it.id) return;
+      var ready = +it.readyAt || 0;
+      if (now < ready) { next = Math.min(next, ready); return; } // still inside the undo window
+      var ts = +it.ts || now, day = ymd(new Date(ts)), e = entry(day);
+      if (!e.car) e.car = [];
+      if (!e.car.some(function (c) { return c.id === it.id; })) {
+        var text = String(it.text || '').trim();
+        if (text) applyParsed(e, HealthParser.parse(text));
+        e.car.push({ id: String(it.id), ts: ts, text: text, summary: String(it.summary || ''), reviewed: false });
+        added++; days[day] = 1;
+      }
+      done.push(String(it.id));
+    });
+    if (done.length && persist(true)) { try { NB.carQueueAck(JSON.stringify(done)); } catch (err) { } }
+    clearTimeout(carT);
+    if (next < Infinity) carT = setTimeout(mergeCarQueue, Math.max(500, Math.min(next - now + 400, 130000)));
+    if (added) {
+      var act = document.activeElement, editing = act && $('dayBody').contains(act) && /INPUT|TEXTAREA/.test(act.tagName);
+      var v = document.querySelector('.view.active');
+      if (v && v.id === 'view-day') { if (days[current] && !editing) renderDay(); else renderChips(); }
+      else if (v && v.id === 'view-history') renderHistory();
+      toast('🚗 נוספו ' + added + ' רישומים מהרכב');
+    }
+    return added;
+  }
+  window.__carQueue = mergeCarQueue;
+
+  function carDayHtml(e) {
+    if (!e.car || !e.car.length) return '';
+    return '<div class="card"><h2>🚗 נרשם מהרכב</h2>' + e.car.map(function (c) {
+      return '<div class="car-item"><div class="car-meta"><b>' + hhmmOf(c.ts) + '</b>' + (c.reviewed ? ' <span class="muted">✓ נבדק</span>' : ' <button class="mini" data-car-ok="' + esc(c.id) + '" data-car-day="' + esc(current) + '">✓ תקין</button>') + '</div>' +
+        '<div>&quot;' + esc(c.text) + '&quot;</div>' + (c.summary ? '<div class="muted">רשמתי: ' + esc(c.summary) + '</div>' : '') + '</div>';
+    }).join('') + '<p class="muted">אם משהו נרשם לא נכון – פשוט תקן בשדות למעלה.</p></div>';
+  }
+  function carUnreviewed() {
+    var out = [];
+    Object.keys(db.entries).sort().reverse().forEach(function (k) { (db.entries[k].car || []).forEach(function (c) { if (!c.reviewed) out.push({ day: k, c: c }); }); });
+    return out;
+  }
+  function renderCarReview() {
+    var box = $('carReview'); if (!box) return;
+    var list = carUnreviewed();
+    if (!list.length) { box.innerHTML = ''; return; }
+    box.innerHTML = '<div class="card car-review"><h2>🚗 מהרכב – לבדיקה (' + list.length + ')</h2><p class="muted">רישומים שנאמרו בקול ונשמרו אוטומטית. כדאי להציץ ולתקן אם משהו לא נקלט נכון.</p>' +
+      list.map(function (x) {
+        return '<div class="car-item"><div class="car-meta"><b>' + esc(fmtShort(x.day)) + ' · ' + hhmmOf(x.c.ts) + '</b></div><div>&quot;' + esc(x.c.text) + '&quot;</div>' +
+          (x.c.summary ? '<div class="muted">רשמתי: ' + esc(x.c.summary) + '</div>' : '') +
+          '<div class="car-acts"><button class="mini" data-car-ok="' + esc(x.c.id) + '" data-car-day="' + x.day + '">✓ תקין</button><button class="mini sec" data-car-open="' + x.day + '">פתח יום</button></div></div>';
+      }).join('') + '<button class="btn sec block" id="carAllOk">✓ סמן הכל כנבדק</button></div>';
+  }
+  function carMarkOk(day, id) {
+    var e = db.entries[day]; if (!e || !e.car) return;
+    e.car.forEach(function (c) { if (!id || c.id === id) c.reviewed = true; });
+  }
+  document.addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-car-ok],[data-car-open],#carAllOk'); if (!b) return;
+    ev.stopPropagation();
+    if (b.id === 'carAllOk') { Object.keys(db.entries).forEach(function (k) { carMarkOk(k, null); }); persist(true); renderHistory(); return; }
+    if (b.dataset.carOpen) { current = b.dataset.carOpen; showView('day'); return; }
+    carMarkOk(b.dataset.carDay, b.dataset.carOk); persist(true);
+    if (document.querySelector('.view.active').id === 'view-history') renderHistory(); else renderDay();
+  }, true);
+
+  function carState() { try { return JSON.parse(NB.getCarState()); } catch (err) { return {}; } }
+  function renderCarUi() {
+    if (!NB || !NB.getCarState) return;
+    var st = carState();
+    var t = $('carToggle');
+    t.classList.remove('hidden');
+    t.classList.toggle('on', !!st.carMode);
+    $('carToggleState').textContent = st.carMode ? 'פועל' : 'כבוי';
+    $('carSettings').classList.remove('hidden');
+    $('carModeSw').checked = !!st.carMode;
+    $('carBtSw').checked = st.btMic !== false;
+    var warn = [];
+    if (!st.mic) warn.push('🎤 אין עדיין הרשאת מיקרופון');
+    if (st.notif === false) warn.push('🔔 התראות כבויות – מצב רכב יעבוד, אבל לא תראה את ההתראה');
+    if (!st.battery) warn.push('🔋 חיסכון בסוללה עלול לכבות את מצב רכב – מומלץ ללחוץ "אל תעצור ברקע"');
+    $('carWarn').innerHTML = warn.map(function (w) { return '<div>' + esc(w) + '</div>'; }).join('');
+    $('carBattery').classList.toggle('hidden', !!st.battery);
+  }
+  window.__carState = renderCarUi;
+  if (NB && NB.getCarState) {
+    $('carToggle').onclick = function () { var st = carState(); NB.setCarMode(!st.carMode); setTimeout(renderCarUi, 400); if (!st.carMode) toast('🚗 מצב רכב: לחץ על כפתור ה-Play בהגה ודבר'); };
+    $('carModeSw').onchange = function () { NB.setCarMode(this.checked); setTimeout(renderCarUi, 400); };
+    $('carBtSw').onchange = function () { NB.setCarBtMic(this.checked); };
+    $('carBattery').onclick = function () { NB.requestBatteryExemption(); };
+    $('carWidget').onclick = function () { if (!NB.pinWidget()) toast('הוסף ידנית: לחיצה ארוכה על מסך הבית ← ווידג׳טים ← יומן בריאות'); };
+    $('carShortcut').onclick = function () { if (!NB.pinShortcut()) toast('לחיצה ארוכה על אייקון האפליקציה ← "דבר ליומן"'); };
+    $('carTest').onclick = function () { NB.carCaptureNow(); };
+    renderCarUi();
+  }
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { mergeCarQueue(); renderCarUi(); } });
+  if (CAR) setInterval(function () { if (!document.hidden) mergeCarQueue(); }, 60000);
+
+  // ---------- backup ----------
+  $('exportBtn').onclick = function () {
+    persist(true);
+    var data = { app: 'health-journal', version: 2, exportedAt: new Date().toISOString(), entries: {} };
+    loggedDays().forEach(function (k) { data.entries[k] = db.entries[k]; });
+    var json = JSON.stringify(data, null, 2), fname = 'health-journal-' + today() + '.json';
+    if (NB && NB.saveFile) { NB.saveFile(fname, json); return; }
+    var blob = new Blob([json], { type: 'application/json' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'health-journal-' + today() + '.json';
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    toast('הגיבוי ירד (' + Object.keys(data.entries).length + ' ימים)');
+  };
+  if (NB && NB.shareText) {
+    $('shareBtn').classList.remove('hidden');
+    $('shareBtn').onclick = function () {
+      persist(true);
+      var data = { app: 'health-journal', version: 2, exportedAt: new Date().toISOString(), entries: {} };
+      loggedDays().forEach(function (k) { data.entries[k] = db.entries[k]; });
+      NB.shareText('health-journal-' + today() + '.json', JSON.stringify(data));
+    };
+  }
+  $('importBtn').onclick = function () { $('importFile').value = ''; $('importFile').click(); };
+  $('importFile').onchange = function () {
+    var f = this.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        var obj = JSON.parse(r.result), ents = obj && obj.entries ? obj.entries : obj;
+        var keys = Object.keys(ents || {}).filter(function (k) { return /^\d{4}-\d{2}-\d{2}$/.test(k); });
+        if (!keys.length) throw new Error('לא נמצאו ימים בקובץ');
+        if (!confirm('נמצאו ' + keys.length + ' ימים בגיבוי. למזג עם היומן? (ימים שקיימים בשניהם יוחלפו בגרסה מהגיבוי)')) return;
+        keys.forEach(function (k) { db.entries[k] = normalizeEntry(ents[k]); });
+        persist(true); toast('יובאו ' + keys.length + ' ימים ✓'); showView('history');
+      } catch (e) { alert('הקובץ לא תקין: ' + e.message); }
+    };
+    r.readAsText(f);
+  };
+  $('wipeBtn').onclick = function () {
+    if (!confirm('למחוק את כל היומן? מומלץ לייצא גיבוי קודם.')) return;
+    if (!confirm('בטוח? אי אפשר לבטל.')) return;
+    db.entries = {}; persist(true); toast('היומן נמחק'); showView('day');
+  };
+
+  window.addEventListener('pagehide', function () { persist(true); });
+  document.addEventListener('visibilitychange', function () { if (document.hidden) persist(true); });
+  renderDay();
+  mergeCarQueue();
+})();
+</script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
+</body>
+</html>
