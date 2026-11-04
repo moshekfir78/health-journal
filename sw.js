@@ -1,5 +1,5 @@
 // offline cache for the health journal web app (data itself lives in localStorage, never here)
-const CACHE = 'hj-desk-1793823054';
+const CACHE = 'hj-desk-1793823131';
 const FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
