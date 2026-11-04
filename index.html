@@ -154,6 +154,10 @@ nav.bottom .in{max-width:640px;margin:0 auto;display:grid;grid-template-columns:
 .sw{display:flex;align-items:center;gap:10px;padding:6px 0;font-weight:600}.sw input{width:22px;height:22px;accent-color:var(--accent)}
 .car-warn div{font-size:.85rem;background:rgba(234,179,8,.14);border-radius:10px;padding:6px 10px;margin:6px 0}
 code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px;font-family:inherit;font-size:.85rem;margin:6px 0}
+.tip{display:flex;gap:8px;align-items:flex-start;padding:8px 10px;border-radius:12px;margin:6px 0;background:var(--soft);line-height:1.4}
+.tip.warn{background:#fff4e5}.tip.good{background:#eaf7ee}.tip .ic{font-size:1.2rem}
+.wk-bar{height:8px;border-radius:6px;background:var(--line);overflow:hidden;margin:4px 0 8px}.wk-bar i{display:block;height:100%;background:#2e9e5b}
+.prof label.sw{margin:4px 0}
 </style>
 </head>
 <body>
@@ -208,6 +212,21 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
         <button class="btn sec" id="carShortcut">➕ קיצור דרך "דבר ליומן"</button>
         <button class="btn" id="carTest">🎤 נסה עכשיו</button>
       </div>
+    </div>
+    <div class="card prof" id="profCard"><h2>🩺 הפרופיל הבריאותי שלי</h2>
+      <p class="muted">לפי הפרופיל הזה אני נותן המלצות אחרי כל רישום. הוא נשמר רק במכשיר הזה.</p>
+      <label class="sw"><input type="checkbox" id="pfActive"><span>המלצות אישיות פעילות</span></label>
+      <div id="pfConds"></div>
+      <div class="grid2">
+        <label class="field"><span>משקל התחלתי (ק"ג)</span><input type="number" step="0.1" id="pfStart" inputmode="decimal"></label>
+        <label class="field"><span>משקל יעד (ק"ג)</span><input type="number" step="0.1" id="pfGoal" inputmode="decimal"></label>
+        <label class="field"><span>יעד הליכה שבועי (דקות)</span><input type="number" id="pfWalk" inputmode="numeric"></label>
+        <label class="field"><span>יעד כוסות קפה ביום</span><input type="number" id="pfCoffee" inputmode="numeric"></label>
+      </div>
+      <div class="backup-actions"><button class="btn" id="pfSave">✓ שמור פרופיל</button></div>
+      <label class="field"><span>קוד ייבוא פרופיל (מתחיל ב־HJP1:)</span><textarea id="pfCode" rows="2" dir="ltr"></textarea></label>
+      <div class="backup-actions"><button class="btn sec" id="pfImport">⬆️ ייבא קוד</button><button class="btn sec" id="pfExport">📋 הצג קוד של הפרופיל</button></div>
+      <p class="muted">ההמלצות כלליות ולא מחליפות רופא. להחלטות רפואיות ותרופות – התייעץ עם הרופא שלך.</p>
     </div>
     <div class="card"><h2>💬 שאל אותי על היום</h2>
       <p class="muted">הכפתור במסך הראשי פותח שיחה קצרה: אני שואל שאלה בקול, מקשיב לתשובה וממשיך לשאלה הבאה. אפשר גם להקליד, ללחוץ על כן / לא, או לדלג. בסוף מופיע סיכום שאפשר לתקן, ושום דבר לא נשמר עד שלוחצים "שמור ביומן". הכפתור 🔊 משתיק את הקול.</p>
@@ -270,6 +289,7 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
     </div>
   </div>
 </div>
+<div class="overlay" id="tipsOverlay"><div class="sheet" role="dialog" aria-modal="true"><h3>💡 המלצה בשבילך</h3><div id="tipsBody"></div><p class="muted">ההמלצות כלליות – להחלטות רפואיות התייעץ עם הרופא שלך.</p><div class="sheet-actions"><button class="btn" id="tipsOk">הבנתי 👍</button></div></div></div>
 <div class="toast" id="toast"></div>
 
 <script id="parser">
@@ -652,6 +672,133 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 
+<script id="tips">
+/* Generic, offline, rule-based tips. Contains NO personal data: conditions/goals come from a profile object stored on the device. */
+(function (root) {
+  'use strict';
+  var CONDS = [
+    ['fattyLiver', 'כבד שומני'], ['liverWatch', 'מעקב כבד (טחול / טסיות)'], ['kidney', 'חלבון בשתן / מעקב כליות'],
+    ['bp', 'לחץ דם גבוה'], ['prediabetes', 'טרום סוכרת'], ['lipids', 'שומנים גבוהים בדם'],
+    ['vitD', 'ויטמין D נמוך'], ['uric', 'חומצה אורית גבוהה'], ['weightLoss', 'ירידה במשקל']
+  ];
+  function defaults() { return { active: false, conditions: {}, startWeight: '', goalWeight: '', walkGoal: 150, coffeeGoal: 0, note: '' }; }
+  function normalize(p) {
+    var d = defaults(); if (!p || typeof p !== 'object') return d;
+    d.active = !!p.active; d.note = String(p.note || '');
+    CONDS.forEach(function (c) { if (p.conditions && p.conditions[c[0]]) d.conditions[c[0]] = true; });
+    ['startWeight', 'goalWeight'].forEach(function (k) { var n = parseFloat(p[k]); d[k] = isFinite(n) && n > 0 ? n : ''; });
+    var w = parseInt(p.walkGoal, 10); d.walkGoal = w > 0 ? w : 150;
+    var c = parseInt(p.coffeeGoal, 10); d.coffeeGoal = c > 0 ? c : 0;
+    return d;
+  }
+  /* import code: "HJP1:" + base64(utf8 JSON) */
+  function encode(p) { var s = JSON.stringify(normalize(p)); return 'HJP1:' + (typeof btoa !== 'undefined' ? btoa(unescape(encodeURIComponent(s))) : Buffer.from(s, 'utf8').toString('base64')); }
+  function decode(code) {
+    var m = String(code || '').replace(/\s+/g, '').match(/^HJP1:([A-Za-z0-9+/=]+)$/); if (!m) return null;
+    try { var s = typeof atob !== 'undefined' ? decodeURIComponent(escape(atob(m[1]))) : Buffer.from(m[1], 'base64').toString('utf8'); var p = normalize(JSON.parse(s)); p.active = true; return p; } catch (e) { return null; }
+  }
+  var RX = {
+    sweetDrink: /קולה|קוקה|ספרייט|פאנטה|שתייה מתוקה|משקה מתוק|מיץ|פטל|סודה מתוקה|משקה אנרגיה|רד בול|תה קר|נקטר|ממותק|שייק/,
+    sugar: /עוגה|עוגיות|עוגייה|שוקולד|ממתק|סוכריות|גלידה|במבה|ביסלי|בורקס|קרואסון|דונאט|סופגני|רוגעלך|ופל|חטיף|פחמימות|לחם לבן|סוכר/,
+    salty: /נקניק|נקניקי|פסטרמה|סלמי|קבנוס|חטיף|ביסלי|צ׳יפס|צ'יפס|צ'יפס|ציפס|פיצה|המבורגר|שווארמה|מלוח|מלח|חמוצים|זיתים|גבינה צהובה|נודלס|אטריות|מרק אבקה|שימורים|רוטב סויה|סויה|קטשופ|מעובד|ג׳אנק|ג'אנק|מקדונלד|בורגר/,
+    fried: /מטוגן|טוגן|שניצל|צ׳יפס|צ'יפס|ציפס|פלאפל|שווארמה|המבורגר|בורגר|נקניק|בשר אדום|אנטריקוט|סטייק|קבב|צלעות|פרגית בשווארמה|מעורב|בורקס|ג׳חנון|מלאווח|ג'חנון/,
+    redMeat: /בשר אדום|בקר|אנטריקוט|סטייק|קבב|המבורגר|בורגר|צלעות|כבש|טלה|נקניק|קציצות בשר|מעורב/,
+    alcohol: /בירה|יין|וודקה|ויסקי|ערק|אלכוהול|קוקטייל|צ׳ייסר|צ'ייסר|שתיתי לשוכרה|ליקר|טקילה|שמפניה/,
+    coffee: /קפה|אספרסו|הפוך|נס קפה|נסקפה|קפוצ׳ינו|קפוצ'ינו|אמריקנו/,
+    good: /סלט|ירקות|ירק|דג|סלמון|טונה|עדשים|חומוס|קטניות|שעועית|אגוזים|שקדים|שמן זית|טחינה|קינואה|כוסמת|בורגול|מלא|יוגורט|פרי|פירות|תפוח|עוף בגריל|חזה עוף|ביצה|חביתה/
+  };
+  function foodText(e) {
+    var t = [];
+    if (e && e.meals) Object.keys(e.meals).forEach(function (k) { if (e.meals[k] && e.meals[k].text) t.push(e.meals[k].text); });
+    if (e && e.notes) t.push(e.notes);
+    if (e && e.car) e.car.forEach(function (c) { if (c && c.text) t.push(c.text); });
+    return t.join(' , ');
+  }
+  function num(v) { var n = parseFloat(v); return isFinite(n) ? n : null; }
+  function exMinutes(e) {
+    var m = 0;
+    (e && e.exercises || []).forEach(function (x) { var n = num(x.minutes); if (n) m += n; });
+    var mv = num(e && e.movement); if (mv && mv > m) m = mv;
+    return m;
+  }
+  /* week = Sunday..Saturday containing `day` (YYYY-MM-DD) */
+  function weekDays(day) {
+    var a = day.split('-').map(Number), d = new Date(a[0], a[1] - 1, a[2]); d.setDate(d.getDate() - d.getDay());
+    var out = []; for (var i = 0; i < 7; i++) { out.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')); d.setDate(d.getDate() + 1); }
+    return out;
+  }
+  function weekMinutes(entries, day) { var s = 0; weekDays(day).forEach(function (k) { if (k <= day && entries[k]) s += exMinutes(entries[k]); }); return s; }
+  function lastWeight(entries, beforeDay) {
+    var ks = Object.keys(entries || {}).filter(function (k) { return k < beforeDay && num(entries[k].weight); }).sort();
+    return ks.length ? num(entries[ks[ks.length - 1]].weight) : null;
+  }
+  var DOC = 'להחלטות רפואיות – התייעץ עם הרופא שלך.';
+  /**
+   * tips for a day. `focus` (optional) = a parse()-like or entry-like object with just what was logged now; falls back to the whole day.
+   * returns [{icon, text, level}] (level: 'warn' | 'info' | 'good'), max `max` items (default 2), most important first.
+   */
+  function forEntry(opts) {
+    var p = normalize(opts.profile), c = p.active ? p.conditions : {}, entries = opts.entries || {}, day = opts.day, e = entries[day] || {};
+    var f = opts.focus || e, txt = foodText(f), out = [];
+    function add(pri, icon, text, level) { out.push({ pri: pri, icon: icon, text: text, level: level || 'info' }); }
+    var liver = c.fattyLiver || c.liverWatch;
+    if (RX.alcohol.test(txt)) add(100, '🚫', liver ? 'אלכוהול פוגע ישירות בכבד – במצב של כבד שומני עדיף להימנע ממנו לגמרי.' : 'כדאי להמעיט באלכוהול – הוא מכביד על הכבד ומעלה לחץ דם.', 'warn');
+    if (RX.sweetDrink.test(txt)) add(90, '🥤', (c.prediabetes || liver ? 'שתייה מתוקה מעלה סוכר ושומן בכבד – ' : 'שתייה מתוקה היא סוכר נוזלי – ') + 'עדיף מים, סודה או תה בלי סוכר.', 'warn');
+    else if (RX.sugar.test(txt) && (c.prediabetes || liver || c.weightLoss)) add(70, '🍰', 'מתוקים ומאפים מקפיצים סוכר – בפעם הבאה נסה פרי, אגוזים או יוגורט במקום.', 'warn');
+    if (RX.salty.test(txt) && (c.bp || c.kidney)) add(80, '🧂', 'זה מאכל מלוח/מעובד – עם לחץ דם ' + (c.kidney ? 'וכליות ' : '') + 'כדאי לשמור על מעט מלח. נסה לאזן היום עם ירקות טריים.', 'warn');
+    if (RX.fried.test(txt) && (liver || c.lipids || c.uric)) {
+      var red = RX.redMeat.test(txt);
+      add(75, '🍳', (red && c.uric ? 'בשר אדום ומעובד מעלים חומצה אורית ושומנים – ' : 'מטוגן ושומן רווי מכבידים על הכבד והשומנים בדם – ') + 'עדיף דג, עוף בגריל או קטניות, בתזונה ים־תיכונית.', 'warn');
+    }
+    if (RX.coffee.test(txt) && liver && p.coffeeGoal) add(30, '☕', 'קפה (בלי סוכר) נחשב טוב לכבד – היעד שלך ' + p.coffeeGoal + ' כוסות ביום.', 'good');
+    if (RX.good.test(txt) && !out.some(function (x) { return x.level === 'warn'; })) add(20, '🥗', 'בחירה טובה – ירקות, קטניות, דגים ושמן זית הם הבסיס של תזונה ים־תיכונית.', 'good');
+    var fm = exMinutes(f);
+    if (fm > 0) {
+      var wk = weekMinutes(entries, day), g = p.walkGoal || 150;
+      add(60, '🚶', wk >= g ? 'כל הכבוד! השבוע כבר ' + wk + ' דקות – עברת את היעד של ' + g + '.' : 'השבוע ' + wk + ' מתוך ' + g + ' דקות – נשארו ' + (g - wk) + '. כל הליכה עוזרת לכבד ולסוכר.', 'good');
+    }
+    var w = num(f.weight);
+    if (w) {
+      var prev = lastWeight(entries, day), goal = p.goalWeight, s;
+      if (goal && w > goal) s = 'נשארו ' + (Math.round((w - goal) * 10) / 10) + ' ק"ג ליעד של ' + goal + '.';
+      else if (goal) s = 'הגעת ליעד של ' + goal + ' ק"ג – כל הכבוד!';
+      else s = '';
+      if (p.startWeight && p.startWeight > w) s = 'ירדת ' + (Math.round((p.startWeight - w) * 10) / 10) + ' ק"ג מאז ' + p.startWeight + '. ' + s;
+      if (prev && w > prev + 0.4) s += ' עלייה קטנה מהשקילה הקודמת זה טבעי – תסתכל על המגמה.';
+      add(65, '⚖️', (s || 'רשמתי את המשקל. שקילה פעם בשבוע באותה שעה נותנת תמונה הכי נכונה.').trim(), 'good');
+    }
+    var sl = num(f.sleep);
+    if (sl && sl < 6) add(50, '😴', 'פחות מ־6 שעות שינה מקשה על שליטה בתיאבון ובסוכר – נסה ללכת לישון מוקדם יותר הלילה.', 'info');
+    if (f.bloodPressure && c.bp) { var bp = String(f.bloodPressure).match(/(\d{2,3})\s*[\/\\]\s*(\d{2,3})/); if (bp && (+bp[1] >= 140 || +bp[2] >= 90)) add(85, '🩺', 'הלחץ גבוה מהרגיל – מדוד שוב אחרי מנוחה, ואם זה חוזר עדכן את הרופא.', 'warn'); }
+    if (c.vitD && fm > 0 && !out.some(function (x) { return x.level === 'warn'; }) && out.length < 2) add(10, '☀️', 'הליכה בבוקר בשמש עוזרת גם לוויטמין D.', 'info');
+    if (num(f.water) != null && f.water > 0 && f.water < 6 && c.uric) add(15, '💧', 'מים עוזרים להוריד חומצה אורית – כוון ל־8 כוסות ביום.', 'info');
+    out.sort(function (a, b) { return b.pri - a.pri; });
+    return out.slice(0, opts.max || 2).map(function (x) { return { icon: x.icon, text: x.text, level: x.level }; });
+  }
+  function weekly(opts) {
+    var p = normalize(opts.profile), c = p.active ? p.conditions : {}, entries = opts.entries || {}, day = opts.day;
+    var days = weekDays(day).filter(function (k) { return k <= day; }), mins = 0, sweet = 0, salty = 0, fried = 0, alc = 0, logged = 0, ws = [];
+    days.forEach(function (k) {
+      var e = entries[k]; if (!e) return; var t = foodText(e); if (t.trim() || exMinutes(e) || num(e.weight)) logged++;
+      mins += exMinutes(e); if (RX.sweetDrink.test(t) || RX.sugar.test(t)) sweet++; if (RX.salty.test(t)) salty++; if (RX.fried.test(t)) fried++; if (RX.alcohol.test(t)) alc++;
+      if (num(e.weight)) ws.push(num(e.weight));
+    });
+    var g = p.walkGoal || 150, lines = [];
+    lines.push({ icon: '🚶', text: 'תנועה: ' + mins + ' / ' + g + ' דקות', pct: Math.min(100, Math.round(mins / g * 100)) });
+    if (ws.length) lines.push({ icon: '⚖️', text: 'משקל אחרון: ' + ws[ws.length - 1] + (p.goalWeight ? ' (יעד ' + p.goalWeight + ')' : '') });
+    lines.push({ icon: '🥤', text: 'ימים עם מתוק: ' + sweet });
+    if (c.bp || c.kidney) lines.push({ icon: '🧂', text: 'ימים עם מלוח/מעובד: ' + salty });
+    if (c.fattyLiver || c.liverWatch || c.lipids) lines.push({ icon: '🍳', text: 'ימים עם מטוגן/בשר אדום: ' + fried });
+    if (alc) lines.push({ icon: '🚫', text: 'ימים עם אלכוהול: ' + alc });
+    var focus = mins < g ? 'יעד לשבוע: להוסיף הליכות קצרות – ' + (g - mins) + ' דקות חסרות.' : sweet > 2 ? 'יעד לשבוע: פחות מתוקים ושתייה מתוקה.' : salty > 2 && (c.bp || c.kidney) ? 'יעד לשבוע: פחות מלח ומזון מעובד.' : 'שבוע טוב – תמשיך ככה!';
+    return { days: logged, minutes: mins, goal: g, lines: lines, focus: focus };
+  }
+  var api = { CONDS: CONDS, defaults: defaults, normalize: normalize, encode: encode, decode: decode, forEntry: forEntry, weekly: weekly, weekMinutes: weekMinutes, DOC: DOC };
+  root.HealthTips = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+
 <script id="app">
 (function () {
   'use strict';
@@ -792,6 +939,7 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
       '<label class="field"><span>🚶 דקות תנועה / הליכה</span><input type="number" min="0" inputmode="numeric" data-k="movement" placeholder="—" value="' + esc(e.movement) + '"></label>' +
       '<label class="field"><span>🌙 הלכתי לישון בשעה</span><input type="time" data-k="bedtime" value="' + esc(e.bedtime) + '"></label></div>' +
       '<label class="field"><span>🩺 לחץ דם (מדידה אחת)</span><input type="text" dir="ltr" inputmode="numeric" data-k="bloodPressure" placeholder="130/85" value="' + esc(e.bloodPressure) + '"></label></div>';
+    h = tipsCardsHtml() + h;
     h += carDayHtml(e);
     h += '<div class="card"><h2>📝 הערות</h2><textarea data-k="notes" rows="3" placeholder="תרופות, כאבים, תחושות, כל דבר חשוב…">' + esc(e.notes) + '</textarea></div>';
     $('dayBody').innerHTML = h;
@@ -985,6 +1133,7 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
     $('voiceOverlay').classList.remove('open');
     showView('day');
     toast('נוסף ליומן ✓');
+    showTips(current, parsed);
   };
 
   /** merge a HealthParser.parse() result into a day entry (used by voice dictation and by car entries) */
@@ -1002,6 +1151,47 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
     if (p.mood != null) e.mood = p.mood;
     if (p.notes.length) e.notes = (e.notes.trim() ? e.notes.trim() + '\n' : '') + p.notes.join('. ');
   }
+
+  // ---------- personal tips (profile lives only in localStorage) ----------
+  var HT = window.HealthTips, PROF_KEY = 'healthJournal.profile.v1';
+  function loadProfile() {
+    try { var r = localStorage.getItem(PROF_KEY); if (r) return HT.normalize(JSON.parse(r)); } catch (e) { }
+    if (window.HJ_PROFILE_PREFILL) { var p = HT.normalize(window.HJ_PROFILE_PREFILL); p.active = true; saveProfile(p); return p; }
+    return HT.defaults();
+  }
+  function saveProfile(p) { try { localStorage.setItem(PROF_KEY, JSON.stringify(p)); } catch (e) { } }
+  var profile = loadProfile();
+  function tipsHtml(list) { return list.map(function (t) { return '<div class="tip ' + t.level + '"><span class="ic">' + t.icon + '</span><span>' + esc(t.text) + '</span></div>'; }).join(''); }
+  function dayTips(day, focus) { return HT.forEntry({ profile: profile, entries: db.entries, day: day, focus: focus }); }
+  function showTips(day, focus) {
+    var list = dayTips(day, focus); if (!list.length) return;
+    $('tipsBody').innerHTML = tipsHtml(list); $('tipsOverlay').classList.add('open');
+  }
+  $('tipsOk').onclick = function () { $('tipsOverlay').classList.remove('open'); };
+  $('tipsOverlay').addEventListener('click', function (ev) { if (ev.target === this) this.classList.remove('open'); });
+  function tipsCardsHtml() {
+    var h = '', list = dayTips(current);
+    if (list.length) h += '<div class="card"><h2>💡 המלצות להיום</h2>' + tipsHtml(list) + '</div>';
+    var w = HT.weekly({ profile: profile, entries: db.entries, day: current });
+    h += '<div class="card"><h2>📅 סיכום השבוע</h2>' + w.lines.map(function (l, i) {
+      return '<div>' + l.icon + ' ' + esc(l.text) + '</div>' + (l.pct != null ? '<div class="wk-bar"><i style="width:' + l.pct + '%"></i></div>' : '');
+    }).join('') + '<div class="tip info"><span class="ic">🎯</span><span>' + esc(w.focus) + '</span></div>' +
+      (profile.active ? '' : '<p class="muted">להמלצות אישיות – מלא את "הפרופיל הבריאותי שלי" בהגדרות.</p>') + '</div>';
+    return h;
+  }
+  function renderProfile() {
+    $('pfActive').checked = profile.active;
+    $('pfConds').innerHTML = HT.CONDS.map(function (c) { return '<label class="sw"><input type="checkbox" data-cond="' + c[0] + '"' + (profile.conditions[c[0]] ? ' checked' : '') + '><span>' + esc(c[1]) + '</span></label>'; }).join('');
+    $('pfStart').value = profile.startWeight; $('pfGoal').value = profile.goalWeight; $('pfWalk').value = profile.walkGoal; $('pfCoffee').value = profile.coffeeGoal || '';
+  }
+  $('pfSave').onclick = function () {
+    var c = {}; $('pfConds').querySelectorAll('[data-cond]').forEach(function (x) { if (x.checked) c[x.dataset.cond] = true; });
+    profile = HT.normalize({ active: $('pfActive').checked, conditions: c, startWeight: $('pfStart').value, goalWeight: $('pfGoal').value, walkGoal: $('pfWalk').value, coffeeGoal: $('pfCoffee').value });
+    saveProfile(profile); renderProfile(); toast('הפרופיל נשמר ✓');
+  };
+  $('pfImport').onclick = function () { var p = HT.decode($('pfCode').value); if (!p) { toast('הקוד לא תקין'); return; } profile = p; saveProfile(p); renderProfile(); $('pfCode').value = ''; toast('הפרופיל יובא ✓'); };
+  $('pfExport').onclick = function () { $('pfCode').value = HT.encode(profile); };
+  renderProfile();
 
   // ---------- guided check-in ("שאל אותי על היום") ----------
   var ANS = HealthParser.answers;
@@ -1308,8 +1498,10 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
     closeCheckin();
     showView('day');
     toast('נשמר ביומן ✓ תודה ששיתפת 💚');
+    showTips(current);
   }
 
+<script>if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
   /* ---- wiring ---- */
   $('ciStart').onclick = openCheckin;
   $('ciClose').onclick = closeCheckin;
@@ -1355,7 +1547,7 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
     var q;
     try { q = JSON.parse(NB.carQueuePeek() || '[]'); } catch (err) { return 0; }
     if (!Array.isArray(q) || !q.length) return 0;
-    var now = Date.now(), done = [], added = 0, next = Infinity, days = {};
+    var lastCar = null, now = Date.now(), done = [], added = 0, next = Infinity, days = {};
     q.forEach(function (it) {
       if (!it || !it.id) return;
       var ready = +it.readyAt || 0;
@@ -1364,7 +1556,7 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
       if (!e.car) e.car = [];
       if (!e.car.some(function (c) { return c.id === it.id; })) {
         var text = String(it.text || '').trim();
-        if (text) applyParsed(e, HealthParser.parse(text));
+        if (text) { var pp = HealthParser.parse(text); applyParsed(e, pp); pp.car = [{ text: text }]; lastCar = { day: day, focus: pp }; }
         e.car.push({ id: String(it.id), ts: ts, text: text, summary: String(it.summary || ''), reviewed: false });
         added++; days[day] = 1;
       }
@@ -1379,6 +1571,7 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
       if (v && v.id === 'view-day') { if (days[current] && !editing) renderDay(); else renderChips(); }
       else if (v && v.id === 'view-history') renderHistory();
       toast('🚗 נוספו ' + added + ' רישומים מהרכב');
+      if (lastCar && !document.hidden) showTips(lastCar.day, lastCar.focus);
     }
     return added;
   }
@@ -1501,6 +1694,5 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
   mergeCarQueue();
 })();
 </script>
-<script>if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>
 </html>
