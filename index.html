@@ -158,6 +158,26 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
 .tip.warn{background:#fff4e5}.tip.good{background:#eaf7ee}.tip .ic{font-size:1.2rem}
 .wk-bar{height:8px;border-radius:6px;background:var(--line);overflow:hidden;margin:4px 0 8px}.wk-bar i{display:block;height:100%;background:#2e9e5b}
 .prof label.sw{margin:4px 0}
+@media (min-width:1000px){
+body{font-size:18px;padding-bottom:24px;padding-right:240px}
+.top{padding-right:24px}
+.top-in,main{max-width:none}
+.top h1{font-size:1.5rem}.top p{font-size:.95rem}
+main{padding:20px 28px}
+nav.bottom{top:0;bottom:0;right:0;left:auto;width:240px;border-top:0;border-left:1px solid var(--line);padding:24px 14px;z-index:40}
+nav.bottom .in{display:flex;flex-direction:column;align-items:stretch;gap:8px;max-width:none}
+nav.bottom .tab{flex-direction:row;justify-content:flex-start;gap:12px;font-size:1.1rem;padding:12px 14px;border-radius:12px}
+nav.bottom .tab .i{font-size:1.4rem}
+nav.bottom .tab.active{background:rgba(15,157,118,.12)}
+nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-color:var(--card)}
+.view.active{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px;align-items:start}
+.view.active>*{margin-bottom:0}
+#view-day.active>.datebar,#view-day.active>.chips,#view-day.active>#todayBtn,#view-history.active>#histList,#view-history.active>#carReview{grid-column:1/-1}
+#dayBody,#histList{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px;align-items:start}
+#dayBody>*,#histList>*{margin-bottom:0}
+.sheet{max-width:760px;border-radius:22px}
+.toast{bottom:30px}
+}
 </style>
 </head>
 <body>
