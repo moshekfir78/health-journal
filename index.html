@@ -1501,7 +1501,6 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
     showTips(current);
   }
 
-<script>if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
   /* ---- wiring ---- */
   $('ciStart').onclick = openCheckin;
   $('ciClose').onclick = closeCheckin;
@@ -1694,5 +1693,6 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
   mergeCarQueue();
 })();
 </script>
+<script>if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>
 </html>
