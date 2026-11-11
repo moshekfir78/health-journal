@@ -158,6 +158,19 @@ code.ex{display:block;background:var(--soft);padding:8px 10px;border-radius:10px
 .tip.warn{background:#fff4e5}.tip.good{background:#eaf7ee}.tip .ic{font-size:1.2rem}
 .wk-bar{height:8px;border-radius:6px;background:var(--line);overflow:hidden;margin:4px 0 8px}.wk-bar i{display:block;height:100%;background:#2e9e5b}
 .prof label.sw{margin:4px 0}
+.auth-overlay{position:fixed;inset:0;z-index:80;background:linear-gradient(135deg,#0f9d76,#0ea5e9);color:#fff;display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
+.auth-overlay.open{display:flex}
+.auth-box{max-width:440px}
+.auth-box h2{margin:8px 0 6px;font-size:1.5rem}
+.auth-box p{opacity:.95;line-height:1.55;margin:8px 0}
+.auth-box .btn{background:#fff;color:#0f9d76;font-size:1.05rem;padding:12px 22px;margin-top:10px}
+.auth-box .btn:disabled{opacity:.6}
+.acct{margin-inline-start:8px;font-size:.75rem;background:rgba(255,255,255,.2);padding:3px 10px;border-radius:99px;max-width:42vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:0;color:#fff}
+.acct.hidden{display:none}
+.sync-pill{font-size:.85rem;margin:6px 0 0}
+.sync-pill.wait{color:#b45309}
+.sync-pill.err{color:var(--danger)}
+.sync-pill.ok{color:var(--accent)}
 @media (min-width:1000px){
 body{font-size:18px;padding-bottom:24px;padding-right:240px}
 .top{padding-right:24px}
@@ -181,7 +194,7 @@ nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-co
 </style>
 </head>
 <body>
-<header class="top"><div class="top-in"><span class="logo">💚</span><div><h1>יומן הבריאות של משה</h1><p id="subtitle">אוכל · ספורט · שינה · מדדים</p></div><span class="saved" id="saved">נשמר ✓</span></div></header>
+<header class="top"><div class="top-in"><span class="logo">💚</span><div><h1>יומן הבריאות של משה</h1><p id="subtitle">אוכל · ספורט · שינה · מדדים</p></div><button class="acct hidden" id="acctBtn" type="button" title="חשבון"></button><span class="saved" id="saved">נשמר ✓</span></div></header>
 
 <main>
   <section class="view active" id="view-day">
@@ -211,8 +224,16 @@ nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-co
   </section>
 
   <section class="view" id="view-backup">
+    <div class="card" id="acctCard"><h2>👤 חשבון Google</h2>
+      <p class="muted" id="acctStatus"></p>
+      <p class="sync-pill" id="syncStatus"></p>
+      <div class="backup-actions">
+        <button class="btn" id="authBtnSettings">התחבר עם Google</button>
+        <button class="btn sec hidden" id="signOutBtn">התנתק</button>
+      </div>
+    </div>
     <div class="card"><h2>💾 גיבוי ושחזור</h2>
-      <p class="muted">הנתונים נשמרים רק במכשיר הזה (בדפדפן). מומלץ לייצא גיבוי מדי פעם.</p>
+      <p class="muted" id="backupHint">הנתונים נשמרים רק במכשיר הזה (בדפדפן). מומלץ לייצא גיבוי מדי פעם.</p>
       <div class="backup-actions">
         <button class="btn" id="exportBtn">⬇️ ייצוא גיבוי (JSON)</button>
         <button class="btn sec hidden" id="shareBtn">📤 שיתוף גיבוי (וואטסאפ / מייל / דרייב)</button>
@@ -234,7 +255,7 @@ nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-co
       </div>
     </div>
     <div class="card prof" id="profCard"><h2>🩺 הפרופיל הבריאותי שלי</h2>
-      <p class="muted">לפי הפרופיל הזה אני נותן המלצות אחרי כל רישום. הוא נשמר רק במכשיר הזה.</p>
+      <p class="muted" id="profHint">לפי הפרופיל הזה אני נותן המלצות אחרי כל רישום. הוא נשמר רק במכשיר הזה.</p>
       <label class="sw"><input type="checkbox" id="pfActive"><span>המלצות אישיות פעילות</span></label>
       <div id="pfConds"></div>
       <div class="grid2">
@@ -311,6 +332,95 @@ nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-co
 </div>
 <div class="overlay" id="tipsOverlay"><div class="sheet" role="dialog" aria-modal="true"><h3>💡 המלצה בשבילך</h3><div id="tipsBody"></div><p class="muted">ההמלצות כלליות – להחלטות רפואיות התייעץ עם הרופא שלך.</p><div class="sheet-actions"><button class="btn" id="tipsOk">הבנתי 👍</button></div></div></div>
 <div class="toast" id="toast"></div>
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-box">
+    <div style="font-size:3rem">💚</div>
+    <h2>יומן הבריאות של משה</h2>
+    <p id="authMsg">התחבר עם חשבון Google כדי לשמור את היומן שלך בחשבון שלך, ולא במכשיר.</p>
+    <button class="btn" id="authBtn">התחבר עם Google</button>
+    <p id="authFine" style="color:rgba(255,255,255,.9);font-size:.82rem;margin-top:16px">הנתונים יישמרו באזור הייעודי לאפליקציות בחשבון Google שלך. אחרי ההתחברות אפשר להשתמש ביומן גם בלי אינטרנט, והשינויים יישמרו כשיתחבר.</p>
+  </div>
+</div>
+
+<script>
+/* === Google OAuth Web client ID ===
+   Paste the client ID from Google Cloud Console here, for example:
+   var GOOGLE_CLIENT_ID = '1234567890-xxxx.apps.googleusercontent.com';
+   Leave empty until the ID is created – the app will keep saving on this device. */
+var GOOGLE_CLIENT_ID = '';
+</script>
+<script id="cloud">
+/* ===== Google Drive journal helpers (pure, no DOM) ===== */
+(function (root) {
+  'use strict';
+  var FILE_NAME = 'journal.json';
+  var DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
+  var EMAIL_SCOPE = 'https://www.googleapis.com/auth/userinfo.email';
+  var KEY = 'healthJournal.moshe.v1';
+  var PROF_KEY = 'healthJournal.profile.v1';
+  var MUTE_KEY = 'healthJournal.moshe.ttsMuted';
+
+  function packJournal(state) {
+    state = state || {};
+    return {
+      app: 'health-journal',
+      version: 3,
+      updatedAt: state.updatedAt || new Date().toISOString(),
+      entries: state.entries && typeof state.entries === 'object' ? state.entries : {},
+      profile: state.profile == null ? null : state.profile,
+      settings: state.settings && typeof state.settings === 'object' ? state.settings : {}
+    };
+  }
+  function unpackJournal(obj) {
+    if (!obj || typeof obj !== 'object') return { entries: {}, profile: null, settings: {} };
+    return {
+      entries: obj.entries && typeof obj.entries === 'object' ? obj.entries : {},
+      profile: obj.profile == null ? null : obj.profile,
+      settings: obj.settings && typeof obj.settings === 'object' ? obj.settings : {}
+    };
+  }
+  /** Merge two journals. Overlay (typically local / unsynced) wins on the same day and for profile/settings when set. */
+  function mergeJournals(base, overlay) {
+    var b = unpackJournal(base), o = unpackJournal(overlay);
+    var entries = {};
+    Object.keys(b.entries).forEach(function (k) { entries[k] = b.entries[k]; });
+    Object.keys(o.entries).forEach(function (k) { entries[k] = o.entries[k]; });
+    var profile = o.profile != null ? o.profile : b.profile;
+    var settings = {};
+    Object.keys(b.settings).forEach(function (k) { settings[k] = b.settings[k]; });
+    Object.keys(o.settings).forEach(function (k) { settings[k] = o.settings[k]; });
+    return packJournal({ entries: entries, profile: profile, settings: settings });
+  }
+  function hasLegacyData(store) {
+    try {
+      if (store.getItem(PROF_KEY) || store.getItem(MUTE_KEY) != null) return true;
+      var k = store.getItem(KEY);
+      if (!k) return false;
+      var r = JSON.parse(k);
+      return !!(r && r.entries && Object.keys(r.entries).length);
+    } catch (e) { return false; }
+  }
+  function readLegacy(store) {
+    var entries = {}, profile = null, settings = {};
+    try {
+      var r = JSON.parse(store.getItem(KEY) || 'null');
+      if (r && r.entries) entries = r.entries;
+    } catch (e) { }
+    try {
+      var p = store.getItem(PROF_KEY);
+      if (p) profile = JSON.parse(p);
+    } catch (e) { }
+    try {
+      var m = store.getItem(MUTE_KEY);
+      if (m != null) settings.ttsMuted = m === '1';
+    } catch (e) { }
+    return packJournal({ entries: entries, profile: profile, settings: settings });
+  }
+  var api = { packJournal: packJournal, unpackJournal: unpackJournal, mergeJournals: mergeJournals, hasLegacyData: hasLegacyData, readLegacy: readLegacy, FILE_NAME: FILE_NAME, DRIVE_SCOPE: DRIVE_SCOPE, EMAIL_SCOPE: EMAIL_SCOPE, KEY: KEY, PROF_KEY: PROF_KEY, MUTE_KEY: MUTE_KEY };
+  root.HealthCloud = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
 
 <script id="parser">
 /* ===== Hebrew free-speech parser (pure, no DOM) ===== */
@@ -823,6 +933,13 @@ nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-co
 (function () {
   'use strict';
   var KEY = 'healthJournal.moshe.v1';
+  var PROF_KEY = 'healthJournal.profile.v1';
+  var MUTE_KEY = 'healthJournal.moshe.ttsMuted';
+  var AUTH_KEY = 'healthJournal.auth.v1';
+  var UNSYNC_KEY = 'healthJournal.unsynced.v1';
+  var CLIENT_ID = (typeof GOOGLE_CLIENT_ID === 'string') ? GOOGLE_CLIENT_ID.trim() : '';
+  var CLOUD_READY = !!CLIENT_ID;
+  var IN_WEBVIEW = !!(window.AndroidBridge);
   var MEALS = [['breakfast', 'ארוחת בוקר', '🍳'], ['lunch', 'ארוחת צהריים', '🥗'], ['dinner', 'ארוחת ערב', '🍲'], ['snacks', 'נשנושים / אחר', '🍎']];
   var MOODS = [[1, '😞', 'רע מאוד'], [2, '😕', 'לא משהו'], [3, '😐', 'בסדר'], [4, '🙂', 'טוב'], [5, '😄', 'מצוין']];
   var $ = function (id) { return document.getElementById(id); };
@@ -861,23 +978,64 @@ nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-co
       e.weight === '' && e.sleep === '' && !e.water && !e.mood && !e.notes.trim() &&
       e.breakfast == null && e.onePlate == null && e.spiral == null && e.movement === '' && e.bedtime === '' && e.bloodPressure === '';
   }
-  function load() {
-    var db = { version: 1, entries: {} };
-    try { var r = JSON.parse(localStorage.getItem(KEY) || 'null'); if (r && r.entries) db.entries = r.entries; } catch (e) { }
-    Object.keys(db.entries).forEach(function (k) { db.entries[k] = normalizeEntry(db.entries[k]); });
-    return db;
+  function loadLocalEntries() {
+    var entries = {};
+    try { var r = JSON.parse(localStorage.getItem(KEY) || 'null'); if (r && r.entries) entries = r.entries; } catch (e) { }
+    Object.keys(entries).forEach(function (k) { entries[k] = normalizeEntry(entries[k]); });
+    return entries;
   }
-  var db = load();
+  var db = { version: 1, entries: {} };
   var current = today();
+  var journalLoaded = false;
+  var authInfo = null;
+  var accessToken = '';
+  var tokenExp = 0;
+  var tokenClient = null;
+  var driveFileId = null;
+  var uploading = false;
+  var pendingSnap = null;
+  var uploadTimer = null;
+  function isSignedIn() { return !!(authInfo && authInfo.email); }
   function entry(d) { if (!db.entries[d]) db.entries[d] = blank(); return db.entries[d]; }
+  function snapshot() {
+    Object.keys(db.entries).forEach(function (k) { if (isEmpty(db.entries[k]) && k !== current) delete db.entries[k]; });
+    var entries = {};
+    Object.keys(db.entries).forEach(function (k) { if (!isEmpty(db.entries[k])) entries[k] = db.entries[k]; });
+    return HealthCloud.packJournal({ entries: entries, profile: profile, settings: { ttsMuted: !!ciMuted } });
+  }
+  function persistLocal(snap) {
+    var out = { version: 2, entries: snap.entries };
+    localStorage.setItem(KEY, JSON.stringify(out));
+    if (snap.profile) localStorage.setItem(PROF_KEY, JSON.stringify(snap.profile));
+    else localStorage.removeItem(PROF_KEY);
+    localStorage.setItem(MUTE_KEY, snap.settings && snap.settings.ttsMuted ? '1' : '0');
+  }
   var saveTimer = null;
+  function writeCache(snap, dirty) {
+    try { localStorage.setItem(UNSYNC_KEY, JSON.stringify({ dirty: !!dirty, journal: snap })); } catch (e) { }
+  }
+  function readCache() {
+    try {
+      var r = JSON.parse(localStorage.getItem(UNSYNC_KEY) || 'null');
+      if (!r) return null;
+      if (r.journal) return { dirty: !!r.dirty, journal: r.journal };
+      if (r.entries || r.profile || r.settings) return { dirty: true, journal: r };
+    } catch (e) { }
+    return null;
+  }
   function persist(now) {
     clearTimeout(saveTimer);
     var go = function () {
-      Object.keys(db.entries).forEach(function (k) { if (isEmpty(db.entries[k]) && k !== current) delete db.entries[k]; });
-      var out = { version: 2, entries: {} };
-      Object.keys(db.entries).forEach(function (k) { if (!isEmpty(db.entries[k])) out.entries[k] = db.entries[k]; });
-      try { localStorage.setItem(KEY, JSON.stringify(out)); flashSaved(); return true; } catch (e) { toast('שגיאה בשמירה: ' + e.message); return false; }
+      var snap;
+      if (IN_WEBVIEW || !CLOUD_READY) {
+        snap = snapshot();
+        try { persistLocal(snap); flashSaved(); return true; } catch (e) { toast('שגיאה בשמירה: ' + e.message); return false; }
+      }
+      if (!isSignedIn() || !journalLoaded) return true;
+      snap = snapshot();
+      writeCache(snap, true);
+      scheduleUpload(snap);
+      return true;
     };
     if (now) return go(); saveTimer = setTimeout(go, 350); return true;
   }
@@ -1172,14 +1330,18 @@ nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-co
     if (p.notes.length) e.notes = (e.notes.trim() ? e.notes.trim() + '\n' : '') + p.notes.join('. ');
   }
 
-  // ---------- personal tips (profile lives only in localStorage) ----------
-  var HT = window.HealthTips, PROF_KEY = 'healthJournal.profile.v1';
+  // ---------- personal tips (profile is part of the journal snapshot) ----------
+  var HT = window.HealthTips;
   function loadProfile() {
+    if (CLOUD_READY) return HT.defaults();
     try { var r = localStorage.getItem(PROF_KEY); if (r) return HT.normalize(JSON.parse(r)); } catch (e) { }
     if (window.HJ_PROFILE_PREFILL) { var p = HT.normalize(window.HJ_PROFILE_PREFILL); p.active = true; saveProfile(p); return p; }
     return HT.defaults();
   }
-  function saveProfile(p) { try { localStorage.setItem(PROF_KEY, JSON.stringify(p)); } catch (e) { } }
+  function saveProfile(p) {
+    if (!CLOUD_READY || IN_WEBVIEW) { try { localStorage.setItem(PROF_KEY, JSON.stringify(p)); } catch (e) { } }
+    if (journalLoaded) persist(true);
+  }
   var profile = loadProfile();
   function tipsHtml(list) { return list.map(function (t) { return '<div class="tip ' + t.level + '"><span class="ic">' + t.icon + '</span><span>' + esc(t.text) + '</span></div>'; }).join(''); }
   function dayTips(day, focus) { return HT.forEntry({ profile: profile, entries: db.entries, day: day, focus: focus }); }
@@ -1207,7 +1369,7 @@ nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-co
   $('pfSave').onclick = function () {
     var c = {}; $('pfConds').querySelectorAll('[data-cond]').forEach(function (x) { if (x.checked) c[x.dataset.cond] = true; });
     profile = HT.normalize({ active: $('pfActive').checked, conditions: c, startWeight: $('pfStart').value, goalWeight: $('pfGoal').value, walkGoal: $('pfWalk').value, coffeeGoal: $('pfCoffee').value });
-    saveProfile(profile); renderProfile(); toast('הפרופיל נשמר ✓');
+    saveProfile(profile); renderProfile(); toast(isSignedIn() ? 'הפרופיל נשמר ב-Google ✓' : 'הפרופיל נשמר ✓');
   };
   $('pfImport').onclick = function () { var p = HT.decode($('pfCode').value); if (!p) { toast('הקוד לא תקין'); return; } profile = p; saveProfile(p); renderProfile(); $('pfCode').value = ''; toast('הפרופיל יובא ✓'); };
   $('pfExport').onclick = function () { $('pfCode').value = HT.encode(profile); };
@@ -1215,10 +1377,9 @@ nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-co
 
   // ---------- guided check-in ("שאל אותי על היום") ----------
   var ANS = HealthParser.answers;
-  var MUTE_KEY = 'healthJournal.moshe.ttsMuted';
   var ci = null; // { plan:[idx], pos, ans:{}, hist:[], follow:null }
   var ciTimer = null, ciListening = false, ciHeard = '', ciErr = '', ciRec = null, ciTtsId = 0, ciTtsPending = null;
-  var ciMuted = false; try { ciMuted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) { }
+  var ciMuted = false; if (!CLOUD_READY) { try { ciMuted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) { } }
   function recent(field, days) {
     for (var i = 0; i < days; i++) { var x = db.entries[addDays(current, -i)]; if (x && str(x[field]).trim() !== '') return true; }
     return false;
@@ -1528,7 +1689,8 @@ nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-co
   $('ciSave').onclick = saveCheckin;
   $('ciMute').onclick = function () {
     ciMuted = !ciMuted; this.textContent = ciMuted ? '🔇' : '🔊';
-    try { localStorage.setItem(MUTE_KEY, ciMuted ? '1' : '0'); } catch (e) { }
+    try { if (!CLOUD_READY || IN_WEBVIEW) localStorage.setItem(MUTE_KEY, ciMuted ? '1' : '0'); } catch (e) { }
+    if (journalLoaded) persist(true);
     if (ciMuted && ciTtsPending) { var f = ciTtsPending.fin; stopTts(); ciTtsId--; f(); }
   };
   $('ciNext').onclick = function () {
@@ -1702,15 +1864,397 @@ nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-co
     r.readAsText(f);
   };
   $('wipeBtn').onclick = function () {
-    if (!confirm('למחוק את כל היומן? מומלץ לייצא גיבוי קודם.')) return;
+    if (!confirm(isSignedIn() ? 'למחוק את כל היומן גם מחשבון Google? מומלץ לייצא גיבוי קודם.' : 'למחוק את כל היומן? מומלץ לייצא גיבוי קודם.')) return;
     if (!confirm('בטוח? אי אפשר לבטל.')) return;
     db.entries = {}; persist(true); toast('היומן נמחק'); showView('day');
   };
 
   window.addEventListener('pagehide', function () { persist(true); });
   document.addEventListener('visibilitychange', function () { if (document.hidden) persist(true); });
-  renderDay();
-  mergeCarQueue();
+
+  // ---------- Google sign-in + Drive appDataFolder ----------
+  function loadAuth() {
+    try { authInfo = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch (e) { authInfo = null; }
+    if (!authInfo || !authInfo.email) authInfo = null;
+  }
+  function saveAuth() {
+    try { if (authInfo) localStorage.setItem(AUTH_KEY, JSON.stringify(authInfo)); else localStorage.removeItem(AUTH_KEY); } catch (e) { }
+  }
+  function clearLegacy() {
+    try { localStorage.removeItem(KEY); localStorage.removeItem(PROF_KEY); localStorage.removeItem(MUTE_KEY); } catch (e) { }
+  }
+  function clearLocalJournalCopies() {
+    clearLegacy();
+    try { localStorage.removeItem(UNSYNC_KEY); } catch (e) { }
+  }
+  function applyJournal(j) {
+    var u = HealthCloud.unpackJournal(j);
+    db.entries = {};
+    Object.keys(u.entries).forEach(function (k) { db.entries[k] = normalizeEntry(u.entries[k]); });
+    profile = u.profile ? HT.normalize(u.profile) : HT.defaults();
+    if (u.settings && u.settings.ttsMuted != null) ciMuted = !!u.settings.ttsMuted;
+    var muteBtn = $('ciMute'); if (muteBtn) muteBtn.textContent = ciMuted ? '🔇' : '🔊';
+  }
+  function setSyncStatus(kind, msg) {
+    var el = $('syncStatus'); if (!el) return;
+    el.className = 'sync-pill' + (kind ? ' ' + kind : '');
+    el.textContent = msg || '';
+  }
+  function updateAcctUi() {
+    var signed = isSignedIn();
+    var status = $('acctStatus'), btnIn = $('authBtnSettings'), btnOut = $('signOutBtn'), chip = $('acctBtn');
+    var backupHint = $('backupHint'), profHint = $('profHint');
+    if (!CLOUD_READY) {
+      if (status) status.textContent = 'התחברות ל-Google עדיין לא הוגדרה באתר. בינתיים הנתונים נשמרים במכשיר הזה בלבד.';
+      if (btnIn) btnIn.classList.add('hidden');
+      if (btnOut) btnOut.classList.add('hidden');
+      if (chip) chip.classList.add('hidden');
+      setSyncStatus('', '');
+      return;
+    }
+    if (IN_WEBVIEW) {
+      if (status) status.textContent = 'התחברות ל-Google לא פועלת בתוך האפליקציה באנדרואיד. פתחו את האתר ב-Chrome: https://moshekfir78.github.io/health-journal/ – ואפשר להתקין אותו למסך הבית.';
+      if (btnIn) btnIn.classList.add('hidden');
+      if (btnOut) btnOut.classList.add('hidden');
+      if (chip) chip.classList.add('hidden');
+      setSyncStatus('', '');
+      if (backupHint) backupHint.textContent = 'באפליקציה באנדרואיד הנתונים נשמרים במכשיר. באתר ב-Chrome הם יישמרו בחשבון Google.';
+      return;
+    }
+    if (signed) {
+      if (status) status.textContent = 'מחובר כ־' + authInfo.email + '. היומן נשמר בחשבון Google שלך (באזור הנתונים של האפליקציה).';
+      if (btnIn) btnIn.classList.add('hidden');
+      if (btnOut) btnOut.classList.remove('hidden');
+      if (chip) { chip.textContent = authInfo.email; chip.classList.remove('hidden'); }
+      if (backupHint) backupHint.textContent = 'היומן נשמר בחשבון Google שלך. ייצוא הוא עותק נוסף שאפשר לשמור אצלך.';
+      if (profHint) profHint.textContent = 'לפי הפרופיל הזה אני נותן המלצות אחרי כל רישום. הוא נשמר בחשבון Google שלך.';
+    } else {
+      if (status) status.textContent = 'התחבר עם Google כדי לשמור את היומן בחשבון שלך, ולא במכשיר.';
+      if (btnIn) btnIn.classList.remove('hidden');
+      if (btnOut) btnOut.classList.add('hidden');
+      if (chip) chip.classList.add('hidden');
+      setSyncStatus('', '');
+    }
+  }
+  function showGate(kind, msg) {
+    var ov = $('authOverlay'), btn = $('authBtn'), fine = $('authFine');
+    if (kind === 'hide') { ov.classList.remove('open'); return; }
+    if (msg) $('authMsg').textContent = msg;
+    if (btn) btn.classList.toggle('hidden', kind === 'load');
+    if (fine) fine.classList.toggle('hidden', kind === 'load');
+    if (btn) btn.disabled = false;
+    ov.classList.add('open');
+  }
+  function loadGis() {
+    return new Promise(function (resolve, reject) {
+      if (window.google && google.accounts && google.accounts.oauth2) return resolve();
+      var s = document.createElement('script');
+      s.src = 'https://accounts.google.com/gsi/client';
+      s.async = true;
+      s.onload = function () { resolve(); };
+      s.onerror = function () { reject(new Error('לא הצלחתי לטעון את שירות Google. בדוק את החיבור לאינטרנט.')); };
+      document.head.appendChild(s);
+    });
+  }
+  function initTokenClient() {
+    if (tokenClient) return;
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: CLIENT_ID,
+      scope: HealthCloud.DRIVE_SCOPE + ' ' + HealthCloud.EMAIL_SCOPE,
+      callback: function () { }
+    });
+  }
+  function requestToken(interactive) {
+    return new Promise(function (resolve, reject) {
+      if (!tokenClient) return reject(new Error('אין לקוח Google'));
+      var done = false;
+      tokenClient.callback = function (resp) {
+        if (done) return; done = true;
+        if (resp && resp.access_token) {
+          accessToken = resp.access_token;
+          tokenExp = Date.now() + Math.max(30, (resp.expires_in || 3600) - 60) * 1000;
+          resolve(accessToken);
+        } else {
+          reject(new Error((resp && (resp.error_description || resp.error)) || 'ההתחברות בוטלה'));
+        }
+      };
+      try { tokenClient.requestAccessToken({ prompt: interactive ? 'consent' : '' }); }
+      catch (e) { if (!done) { done = true; reject(e); } }
+    });
+  }
+  function ensureToken(interactive) {
+    if (accessToken && Date.now() < tokenExp) return Promise.resolve(accessToken);
+    return requestToken(!!interactive);
+  }
+  function fetchEmail(token) {
+    return fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { Authorization: 'Bearer ' + token } }).then(function (r) {
+      if (!r.ok) throw new Error('לא הצלחתי לקרוא את פרטי החשבון');
+      return r.json();
+    }).then(function (u) { return u.email || u.sub || ''; });
+  }
+  var DRIVE = 'https://www.googleapis.com/drive/v3';
+  var UPLOAD = 'https://www.googleapis.com/upload/drive/v3';
+  function driveFetch(url, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ Authorization: 'Bearer ' + accessToken }, opts.headers || {});
+    return fetch(url, opts).then(function (r) {
+      if (r.status !== 401) return r;
+      accessToken = ''; tokenExp = 0;
+      return requestToken(false).catch(function () { return requestToken(true); }).then(function () {
+        opts.headers.Authorization = 'Bearer ' + accessToken;
+        return fetch(url, opts);
+      });
+    });
+  }
+  function findDriveFile() {
+    var q = encodeURIComponent("name='" + HealthCloud.FILE_NAME + "'");
+    return driveFetch(DRIVE + '/files?spaces=appDataFolder&q=' + q + '&fields=files(id,name,modifiedTime)&pageSize=10').then(function (r) {
+      if (!r.ok) throw new Error('שגיאה בחיפוש הקובץ ב-Google');
+      return r.json();
+    }).then(function (data) { return (data.files && data.files[0] && data.files[0].id) || null; });
+  }
+  function downloadDriveFile(id) {
+    return driveFetch(DRIVE + '/files/' + encodeURIComponent(id) + '?alt=media').then(function (r) {
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error('שגיאה בטעינה מ-Google');
+      return r.json();
+    });
+  }
+  function createDriveFile(snap) {
+    var meta = { name: HealthCloud.FILE_NAME, parents: ['appDataFolder'], mimeType: 'application/json' };
+    var boundary = 'hj' + Date.now().toString(16);
+    var nl = '\r\n';
+    var body = '--' + boundary + nl + 'Content-Type: application/json; charset=UTF-8' + nl + nl +
+      JSON.stringify(meta) + nl + '--' + boundary + nl + 'Content-Type: application/json' + nl + nl +
+      JSON.stringify(snap) + nl + '--' + boundary + '--';
+    return driveFetch(UPLOAD + '/files?uploadType=multipart&fields=id', {
+      method: 'POST',
+      headers: { 'Content-Type': 'multipart/related; boundary=' + boundary },
+      body: body
+    }).then(function (r) {
+      if (!r.ok) throw new Error('שגיאה ביצירת הקובץ ב-Google');
+      return r.json();
+    }).then(function (data) { return data.id; });
+  }
+  function updateDriveFile(id, snap) {
+    return driveFetch(UPLOAD + '/files/' + encodeURIComponent(id) + '?uploadType=media', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(snap)
+    }).then(function (r) {
+      if (!r.ok) throw new Error('שגיאה בשמירה ל-Google');
+    });
+  }
+  function scheduleUpload(snap) {
+    pendingSnap = snap;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      setSyncStatus('wait', 'אין אינטרנט – יישמר ב-Google כשיתחבר');
+      var s = $('saved'); if (s) s.textContent = 'יישמר ✓';
+      flashSaved();
+      return;
+    }
+    setSyncStatus('wait', 'שומר ב-Google…');
+    clearTimeout(uploadTimer);
+    uploadTimer = setTimeout(flushUpload, 700);
+  }
+  function flushUpload() {
+    if (uploading) { uploadTimer = setTimeout(flushUpload, 400); return; }
+    var snap = pendingSnap; pendingSnap = null;
+    if (!snap) return;
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      pendingSnap = snap;
+      setSyncStatus('wait', 'אין אינטרנט – יישמר ב-Google כשיתחבר');
+      return;
+    }
+    uploading = true;
+    ensureToken(false).then(function () {
+      var ready = driveFileId ? Promise.resolve(driveFileId) : findDriveFile();
+      return ready.then(function (id) {
+        if (id) { driveFileId = id; return updateDriveFile(id, snap); }
+        return createDriveFile(snap).then(function (newId) { driveFileId = newId; });
+      });
+    }).then(function () {
+      if (!pendingSnap) writeCache(snap, false);
+      setSyncStatus('ok', 'נשמר בחשבון Google');
+      var s = $('saved'); if (s) s.textContent = 'נשמר ✓';
+      flashSaved();
+    }).catch(function (e) {
+      setSyncStatus('err', 'לא נשמר ב-Google' + (e && e.message ? ': ' + e.message : ''));
+      writeCache(snap, true);
+    }).then(function () {
+      uploading = false;
+      if (pendingSnap) scheduleUpload(pendingSnap);
+    });
+  }
+  function pullAndApply() {
+    var cache = readCache();
+    var dirty = cache && cache.dirty ? cache.journal : null;
+    var cached = cache ? cache.journal : null;
+    var legacy = HealthCloud.hasLegacyData(localStorage) ? HealthCloud.readLegacy(localStorage) : null;
+    return findDriveFile().then(function (id) {
+      driveFileId = id;
+      return id ? downloadDriveFile(id) : null;
+    }).then(function (remote) {
+      var j = remote || cached || HealthCloud.packJournal({ entries: {}, profile: null, settings: {} });
+      if (legacy) j = HealthCloud.mergeJournals(j, legacy);
+      if (dirty) j = HealthCloud.mergeJournals(j, dirty);
+      applyJournal(j);
+      journalLoaded = true;
+      var migrated = !!legacy;
+      if (migrated) clearLegacy();
+      var needSave = migrated || !!dirty || !remote;
+      if (needSave) persist(true);
+      else writeCache(j, false);
+      if (migrated) toast('הנתונים מהמכשיר הועברו לחשבון Google ✓');
+      return j;
+    });
+  }
+  function afterSignedIn() {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      var cache = readCache();
+      if (cache) {
+        applyJournal(cache.journal);
+        journalLoaded = true;
+        setSyncStatus('wait', cache.dirty ? 'אין אינטרנט – יישמר ב-Google כשיתחבר' : 'אין אינטרנט – מוצג העותק האחרון. יישמר ב-Google כשיתחבר אם יהיו שינויים.');
+        return Promise.resolve();
+      }
+      journalLoaded = false;
+      setSyncStatus('wait', 'אין אינטרנט ואין עותק מקומי. כשיתחבר ייטען היומן מ-Google.');
+      return Promise.resolve();
+    }
+    return pullAndApply();
+  }
+  function signIn() {
+    if (IN_WEBVIEW) { toast('יש לפתוח את האתר ב-Chrome, לא באפליקציה'); return; }
+    var btns = [$('authBtn'), $('authBtnSettings')];
+    btns.forEach(function (b) { if (b) b.disabled = true; });
+    loadGis().then(function () {
+      initTokenClient();
+      return requestToken(true);
+    }).then(function (token) {
+      return fetchEmail(token);
+    }).then(function (email) {
+      if (!email) throw new Error('לא התקבל אימייל מהחשבון');
+      authInfo = { email: email };
+      saveAuth();
+      showGate('load', 'טוען את היומן מ-Google…');
+      return afterSignedIn();
+    }).then(function () {
+      showGate('hide');
+      updateAcctUi();
+      renderProfile();
+      renderDay();
+      if (journalLoaded) { mergeCarQueue(); toast('מחובר כ־' + authInfo.email); }
+      else toast('מחובר, אבל אין אינטרנט – היומן ייטען כשיתחבר');
+    }).catch(function (e) {
+      showGate('auth', 'התחבר עם חשבון Google כדי לשמור את היומן שלך בחשבון שלך, ולא במכשיר.');
+      toast('ההתחברות נכשלה: ' + (e && e.message ? e.message : e));
+    }).then(function () {
+      btns.forEach(function (b) { if (b) b.disabled = false; });
+    });
+  }
+  function signOut() {
+    if (!confirm('להתנתק? העותק המקומי במכשיר הזה יימחק. היומן יישאר בחשבון Google.')) return;
+    if (accessToken && window.google && google.accounts && google.accounts.oauth2 && google.accounts.oauth2.revoke) {
+      try { google.accounts.oauth2.revoke(accessToken, function () {}); } catch (e) { }
+    }
+    accessToken = ''; tokenExp = 0; driveFileId = null; authInfo = null; journalLoaded = false; pendingSnap = null;
+    saveAuth();
+    clearLocalJournalCopies();
+    db.entries = {};
+    profile = HT.defaults();
+    ciMuted = false;
+    var muteBtn = $('ciMute'); if (muteBtn) muteBtn.textContent = '🔊';
+    updateAcctUi();
+    renderProfile();
+    renderDay();
+    showGate('auth', 'התחבר עם חשבון Google כדי לשמור את היומן שלך בחשבון שלך, ולא במכשיר.');
+    toast('התנתקת. היומן נשאר בחשבון Google');
+  }
+
+  $('acctBtn').onclick = function () { persist(true); showView('backup'); };
+  $('authBtn').onclick = signIn;
+  $('authBtnSettings').onclick = signIn;
+  $('signOutBtn').onclick = signOut;
+  window.addEventListener('online', function () {
+    if (!CLOUD_READY || IN_WEBVIEW || !isSignedIn()) return;
+    if (!journalLoaded) {
+      showGate('load', 'טוען את היומן מ-Google…');
+      afterSignedIn().then(function () {
+        showGate('hide');
+        updateAcctUi();
+        renderProfile();
+        renderDay();
+        mergeCarQueue();
+      }).catch(function (e) {
+        setSyncStatus('err', 'לא הצלחתי לטעון מ-Google' + (e && e.message ? ': ' + e.message : ''));
+      });
+      return;
+    }
+    var c = readCache();
+    if (c && c.dirty) scheduleUpload(c.journal);
+    else if (pendingSnap) scheduleUpload(pendingSnap);
+  });
+
+  function bootLocal() {
+    db.entries = loadLocalEntries();
+    journalLoaded = true;
+    updateAcctUi();
+    renderProfile();
+    renderDay();
+    mergeCarQueue();
+  }
+  function bootCloud() {
+    loadAuth();
+    updateAcctUi();
+    if (IN_WEBVIEW) {
+      // keep current on-device behaviour inside the Android app
+      db.entries = loadLocalEntries();
+      try { var r = localStorage.getItem(PROF_KEY); if (r) profile = HT.normalize(JSON.parse(r)); } catch (e) { }
+      try { ciMuted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) { }
+      journalLoaded = true;
+      renderProfile();
+      renderDay();
+      mergeCarQueue();
+      return;
+    }
+    if (!isSignedIn()) {
+      journalLoaded = false;
+      renderProfile();
+      renderDay();
+      showGate('auth', 'התחבר עם חשבון Google כדי לשמור את היומן שלך בחשבון שלך, ולא במכשיר.');
+      return;
+    }
+    showGate('load', 'טוען את היומן מ-Google…');
+    loadGis().then(function () {
+      initTokenClient();
+      return ensureToken(false);
+    }).then(function () {
+      return afterSignedIn();
+    }).then(function () {
+      showGate('hide');
+      updateAcctUi();
+      renderProfile();
+      renderDay();
+      mergeCarQueue();
+    }).catch(function (e) {
+      var cache = readCache();
+      if (cache) {
+        applyJournal(cache.journal);
+        journalLoaded = true;
+        showGate('hide');
+        updateAcctUi();
+        renderProfile();
+        renderDay();
+        mergeCarQueue();
+        setSyncStatus('wait', 'לא הצלחתי להתחבר ל-Google. מוצג עותק זמני מהמכשיר.');
+        return;
+      }
+      showGate('auth', 'יש להתחבר שוב ל-Google כדי לטעון את היומן.' + (e && e.message ? ' (' + e.message + ')' : ''));
+    });
+  }
+
+  if (CLOUD_READY) bootCloud(); else bootLocal();
 })();
 </script>
 <script>if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
