@@ -940,6 +940,10 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
   var CLIENT_ID = (typeof GOOGLE_CLIENT_ID === 'string') ? GOOGLE_CLIENT_ID.trim() : '';
   var CLOUD_READY = !!CLIENT_ID;
   var IN_WEBVIEW = !!(window.AndroidBridge);
+  // Android app: Google sign-in is done natively (browser + PKCE) and the bridge hands us access tokens.
+  var NA = (IN_WEBVIEW && typeof window.AndroidBridge.authConfigured === 'function') ? window.AndroidBridge : null;
+  var NATIVE_AUTH = false; try { NATIVE_AUTH = !!(NA && NA.authConfigured()); } catch (e) { }
+  var CLOUD_ON = CLOUD_READY && (!IN_WEBVIEW || NATIVE_AUTH);
   var MEALS = [['breakfast', 'ארוחת בוקר', '🍳'], ['lunch', 'ארוחת צהריים', '🥗'], ['dinner', 'ארוחת ערב', '🍲'], ['snacks', 'נשנושים / אחר', '🍎']];
   var MOODS = [[1, '😞', 'רע מאוד'], [2, '😕', 'לא משהו'], [3, '😐', 'בסדר'], [4, '🙂', 'טוב'], [5, '😄', 'מצוין']];
   var $ = function (id) { return document.getElementById(id); };
@@ -1027,7 +1031,7 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
     clearTimeout(saveTimer);
     var go = function () {
       var snap;
-      if (IN_WEBVIEW || !CLOUD_READY) {
+      if (!CLOUD_ON) {
         snap = snapshot();
         try { persistLocal(snap); flashSaved(); return true; } catch (e) { toast('שגיאה בשמירה: ' + e.message); return false; }
       }
@@ -1333,13 +1337,13 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
   // ---------- personal tips (profile is part of the journal snapshot) ----------
   var HT = window.HealthTips;
   function loadProfile() {
-    if (CLOUD_READY) return HT.defaults();
+    if (CLOUD_ON) return HT.defaults();
     try { var r = localStorage.getItem(PROF_KEY); if (r) return HT.normalize(JSON.parse(r)); } catch (e) { }
     if (window.HJ_PROFILE_PREFILL) { var p = HT.normalize(window.HJ_PROFILE_PREFILL); p.active = true; saveProfile(p); return p; }
     return HT.defaults();
   }
   function saveProfile(p) {
-    if (!CLOUD_READY || IN_WEBVIEW) { try { localStorage.setItem(PROF_KEY, JSON.stringify(p)); } catch (e) { } }
+    if (!CLOUD_ON) { try { localStorage.setItem(PROF_KEY, JSON.stringify(p)); } catch (e) { } }
     if (journalLoaded) persist(true);
   }
   var profile = loadProfile();
@@ -1379,7 +1383,7 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
   var ANS = HealthParser.answers;
   var ci = null; // { plan:[idx], pos, ans:{}, hist:[], follow:null }
   var ciTimer = null, ciListening = false, ciHeard = '', ciErr = '', ciRec = null, ciTtsId = 0, ciTtsPending = null;
-  var ciMuted = false; if (!CLOUD_READY) { try { ciMuted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) { } }
+  var ciMuted = false; if (!CLOUD_ON) { try { ciMuted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) { } }
   function recent(field, days) {
     for (var i = 0; i < days; i++) { var x = db.entries[addDays(current, -i)]; if (x && str(x[field]).trim() !== '') return true; }
     return false;
@@ -1689,7 +1693,7 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
   $('ciSave').onclick = saveCheckin;
   $('ciMute').onclick = function () {
     ciMuted = !ciMuted; this.textContent = ciMuted ? '🔇' : '🔊';
-    try { if (!CLOUD_READY || IN_WEBVIEW) localStorage.setItem(MUTE_KEY, ciMuted ? '1' : '0'); } catch (e) { }
+    try { if (!CLOUD_ON) localStorage.setItem(MUTE_KEY, ciMuted ? '1' : '0'); } catch (e) { }
     if (journalLoaded) persist(true);
     if (ciMuted && ciTtsPending) { var f = ciTtsPending.fin; stopTts(); ciTtsId--; f(); }
   };
@@ -1725,6 +1729,7 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
   /** pull entries saved by the native service (durable queue) into localStorage; ack only after a successful save */
   function mergeCarQueue() {
     if (!CAR) return 0;
+    if (CLOUD_ON && !journalLoaded) return 0; // keep items in the native queue until the journal is loaded from Google
     var q;
     try { q = JSON.parse(NB.carQueuePeek() || '[]'); } catch (err) { return 0; }
     if (!Array.isArray(q) || !q.length) return 0;
@@ -1912,13 +1917,13 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
       setSyncStatus('', '');
       return;
     }
-    if (IN_WEBVIEW) {
-      if (status) status.textContent = 'התחברות ל-Google לא פועלת בתוך האפליקציה באנדרואיד. פתחו את האתר ב-Chrome: https://moshekfir78.github.io/health-journal/ – ואפשר להתקין אותו למסך הבית.';
+    if (IN_WEBVIEW && !NATIVE_AUTH) {
+      if (status) status.textContent = NA ? 'התחברות ל-Google עוד לא הוגדרה בגרסה הזו של האפליקציה (חסר מזהה לקוח Android). בינתיים הנתונים נשמרים במכשיר הזה בלבד, כמו קודם.' : 'התחברות ל-Google לא פועלת בתוך האפליקציה באנדרואיד. פתחו את האתר ב-Chrome: https://moshekfir78.github.io/health-journal/ – ואפשר להתקין אותו למסך הבית.';
       if (btnIn) btnIn.classList.add('hidden');
       if (btnOut) btnOut.classList.add('hidden');
       if (chip) chip.classList.add('hidden');
       setSyncStatus('', '');
-      if (backupHint) backupHint.textContent = 'באפליקציה באנדרואיד הנתונים נשמרים במכשיר. באתר ב-Chrome הם יישמרו בחשבון Google.';
+      if (backupHint) backupHint.textContent = 'באפליקציה הזו הנתונים נשמרים במכשיר. באתר ב-Chrome הם יישמרו בחשבון Google.';
       return;
     }
     if (signed) {
@@ -1965,7 +1970,35 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
       error_callback: function (err) { if (tokenClient && tokenClient._onErr) tokenClient._onErr(err); }
     });
   }
+  var nativeCbs = {}, nativeSeq = 0;
+  window.__nativeAuth = {
+    onToken: function (id, r) { var cb = nativeCbs[id]; delete nativeCbs[id]; if (cb) cb(r); },
+    onExternalSignIn: function () { if (!journalLoaded || !isSignedIn()) signIn(); }
+  };
+  function nativeToken(mode) {
+    return new Promise(function (resolve, reject) {
+      var id = 'a' + (++nativeSeq);
+      nativeCbs[id] = function (r) {
+        if (typeof r === 'string') { try { r = JSON.parse(r); } catch (e) { r = null; } }
+        if (r && r.access_token) {
+          if (r.scope && String(r.scope).split(' ').indexOf(HealthCloud.DRIVE_SCOPE) < 0) {
+            var se = new Error('לא אישרת גישה ל-Google Drive. בהתחברות יש לסמן את התיבה שמאפשרת לאפליקציה לשמור נתונים ב-Drive');
+            se.code = 'scope'; try { NA.authSignOut(); } catch (e) { }
+            return reject(se);
+          }
+          accessToken = r.access_token;
+          tokenExp = Date.now() + Math.max(30, (r.expires_in || 3600) - 60) * 1000;
+          return resolve(accessToken);
+        }
+        var err = new Error((r && (r.error_description || r.error)) || 'ההתחברות נכשלה');
+        err.code = (r && r.error) || 'unknown';
+        reject(err);
+      };
+      try { NA.authGetToken(id, mode); } catch (e) { delete nativeCbs[id]; reject(e); }
+    });
+  }
   function requestToken(interactive) {
+    if (NATIVE_AUTH) return nativeToken(interactive ? 'interactive' : 'refresh');
     return new Promise(function (resolve, reject) {
       if (!tokenClient) return reject(new Error('אין לקוח Google'));
       var done = false;
@@ -2106,9 +2139,13 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
       if (dirty) j = HealthCloud.mergeJournals(j, dirty);
       applyJournal(j);
       journalLoaded = true;
+      var prefilled = false;
+      if (window.HJ_PROFILE_PREFILL && !HealthCloud.unpackJournal(j).profile) {
+        profile = HT.normalize(window.HJ_PROFILE_PREFILL); profile.active = true; prefilled = true;
+      }
       var migrated = !!legacy;
       if (migrated) clearLegacy();
-      var needSave = migrated || !!dirty || !remote;
+      var needSave = migrated || prefilled || !!dirty || !remote;
       if (needSave) persist(true);
       else writeCache(j, false);
       if (migrated) toast('הנתונים מהמכשיר הועברו לחשבון Google ✓');
@@ -2130,19 +2167,24 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
     }
     return pullAndApply();
   }
+  var signingIn = false;
   function signIn() {
-    if (IN_WEBVIEW) { toast('יש לפתוח את האתר ב-Chrome, לא באפליקציה'); return; }
+    if (IN_WEBVIEW && !NATIVE_AUTH) { toast(NA ? 'התחברות ל-Google עוד לא הוגדרה באפליקציה' : 'יש לפתוח את האתר ב-Chrome, לא באפליקציה'); return; }
+    if (signingIn) return;
+    signingIn = true;
     var btns = [$('authBtn'), $('authBtnSettings')];
     btns.forEach(function (b) { if (b) b.disabled = true; });
-    loadGis().then(function () {
+    var start = NATIVE_AUTH ? requestToken(true) : loadGis().then(function () {
       initTokenClient();
       return requestToken(authInfo ? true : 'consent');
-    }).then(function (token) {
+    });
+    start.then(function (token) {
       return fetchEmail(token);
     }).then(function (email) {
       if (!email) throw new Error('לא התקבל אימייל מהחשבון');
       authInfo = { email: email };
       saveAuth();
+      if (NATIVE_AUTH) { try { NA.authSetEmail(email); } catch (e) { } }
       showGate('load', 'טוען את היומן מ-Google…');
       return afterSignedIn();
     }).then(function () {
@@ -2158,6 +2200,7 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
       toast('ההתחברות נכשלה');
     }).then(function () {
       btns.forEach(function (b) { if (b) b.disabled = false; });
+      signingIn = false;
     });
   }
   function signOut() {
@@ -2165,6 +2208,7 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
     if (accessToken && window.google && google.accounts && google.accounts.oauth2 && google.accounts.oauth2.revoke) {
       try { google.accounts.oauth2.revoke(accessToken, function () {}); } catch (e) { }
     }
+    if (NATIVE_AUTH) { try { NA.authSignOut(); } catch (e) { } }
     accessToken = ''; tokenExp = 0; driveFileId = null; authInfo = null; journalLoaded = false; pendingSnap = null;
     saveAuth();
     clearLocalJournalCopies();
@@ -2184,7 +2228,7 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
   $('authBtnSettings').onclick = signIn;
   $('signOutBtn').onclick = signOut;
   window.addEventListener('online', function () {
-    if (!CLOUD_READY || IN_WEBVIEW || !isSignedIn()) return;
+    if (!CLOUD_ON || !isSignedIn()) return;
     if (!journalLoaded) {
       showGate('load', 'טוען את היומן מ-Google…');
       afterSignedIn().then(function () {
@@ -2210,21 +2254,53 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
     renderProfile();
     renderDay();
     mergeCarQueue();
+    if (IN_WEBVIEW && NA && CLOUD_READY && !NATIVE_AUTH) {
+      try { if (!sessionStorage.getItem('hjNoAuthNote')) { sessionStorage.setItem('hjNoAuthNote', '1'); setTimeout(function () { toast('התחברות ל-Google עוד לא הוגדרה באפליקציה – שומר במכשיר'); }, 800); } } catch (e) { }
+    }
+  }
+  function finishCloudBoot() {
+    showGate('hide');
+    updateAcctUi();
+    renderProfile();
+    renderDay();
+    mergeCarQueue();
+  }
+  // Android app: no popup problem – a stored refresh token gives a fresh access token silently.
+  function bootNative() {
+    var hasSess = false; try { hasSess = !!NA.authHasSession(); } catch (e) { }
+    journalLoaded = false;
+    renderProfile();
+    renderDay();
+    if (!hasSess) {
+      if (authInfo) { authInfo = null; saveAuth(); updateAcctUi(); }
+      showGate('auth', 'התחבר עם חשבון Google כדי לשמור את היומן שלך בחשבון שלך, ולא במכשיר.');
+      return;
+    }
+    if (!isSignedIn()) { signIn(); return; }
+    showGate('load', 'טוען את היומן מ-Google…');
+    var offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+    (offline ? afterSignedIn() : requestToken(false).then(function () { return afterSignedIn(); })).then(finishCloudBoot).catch(function (e) {
+      var msg = e && e.message ? e.message : String(e);
+      if (e && (e.code === 'invalid_grant' || e.code === 'no_session' || e.code === 'scope')) {
+        authInfo = null; saveAuth(); updateAcctUi();
+        showGate('auth', e.code === 'scope' ? msg : 'החיבור ל-Google פג או בוטל. התחבר שוב עם Google.');
+        return;
+      }
+      var c = readCache();
+      if (c) {
+        applyJournal(c.journal);
+        journalLoaded = true;
+        finishCloudBoot();
+        setSyncStatus('err', 'לא הצלחתי להתחבר ל-Google: ' + msg + ' – מוצג העותק האחרון, והשינויים יישמרו כשיתחבר');
+        return;
+      }
+      showGate('auth', 'לא הצלחתי לטעון את היומן מ-Google: ' + msg + '. נסה שוב.');
+    });
   }
   function bootCloud() {
     loadAuth();
     updateAcctUi();
-    if (IN_WEBVIEW) {
-      // keep current on-device behaviour inside the Android app
-      db.entries = loadLocalEntries();
-      try { var r = localStorage.getItem(PROF_KEY); if (r) profile = HT.normalize(JSON.parse(r)); } catch (e) { }
-      try { ciMuted = localStorage.getItem(MUTE_KEY) === '1'; } catch (e) { }
-      journalLoaded = true;
-      renderProfile();
-      renderDay();
-      mergeCarQueue();
-      return;
-    }
+    if (NATIVE_AUTH) { bootNative(); return; }
     if (!isSignedIn()) {
       journalLoaded = false;
       renderProfile();
@@ -2240,7 +2316,7 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
     showGate('auth', 'שלום ' + authInfo.email + ' – לחץ להמשך עם Google כדי לטעון את היומן.');
   }
 
-  if (CLOUD_READY) bootCloud(); else bootLocal();
+  if (CLOUD_ON) bootCloud(); else bootLocal();
 })();
 </script>
 <script>if('serviceWorker' in navigator&&location.protocol==='https:'){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
