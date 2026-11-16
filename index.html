@@ -1961,7 +1961,8 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
     tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: HealthCloud.DRIVE_SCOPE + ' ' + HealthCloud.EMAIL_SCOPE,
-      callback: function () { }
+      callback: function () { },
+      error_callback: function (err) { if (tokenClient && tokenClient._onErr) tokenClient._onErr(err); }
     });
   }
   function requestToken(interactive) {
@@ -1970,7 +1971,9 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
       var done = false;
       tokenClient.callback = function (resp) {
         if (done) return; done = true;
-        if (resp && resp.access_token) {
+        if (resp && resp.access_token && google.accounts.oauth2.hasGrantedAllScopes && !google.accounts.oauth2.hasGrantedAllScopes(resp, HealthCloud.DRIVE_SCOPE)) {
+          reject(new Error('לא אישרת גישה ל-Google Drive. בהתחברות יש לסמן את התיבה שמאפשרת לאפליקציה לשמור נתונים ב-Drive'));
+        } else if (resp && resp.access_token) {
           accessToken = resp.access_token;
           tokenExp = Date.now() + Math.max(30, (resp.expires_in || 3600) - 60) * 1000;
           resolve(accessToken);
@@ -1978,7 +1981,10 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
           reject(new Error((resp && (resp.error_description || resp.error)) || 'ההתחברות בוטלה'));
         }
       };
-      try { tokenClient.requestAccessToken({ prompt: interactive ? 'consent' : '' }); }
+      tokenClient._onErr = function (err) { if (done) return; done = true; reject(new Error(err && err.type === 'popup_closed' ? 'חלון ההתחברות נסגר' : err && err.type === 'popup_failed_to_open' ? 'הדפדפן חסם את חלון ההתחברות' : 'ההתחברות נכשלה')); };
+      var opts = { prompt: interactive === 'consent' ? 'consent' : '' };
+      if (authInfo && authInfo.email) opts.login_hint = authInfo.email;
+      try { tokenClient.requestAccessToken(opts); }
       catch (e) { if (!done) { done = true; reject(e); } }
     });
   }
@@ -2009,7 +2015,7 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
   function findDriveFile() {
     var q = encodeURIComponent("name='" + HealthCloud.FILE_NAME + "'");
     return driveFetch(DRIVE + '/files?spaces=appDataFolder&q=' + q + '&fields=files(id,name,modifiedTime)&pageSize=10').then(function (r) {
-      if (!r.ok) throw new Error('שגיאה בחיפוש הקובץ ב-Google');
+      if (!r.ok) return r.text().then(function (t) { throw new Error('שגיאה בגישה ל-Google Drive (' + r.status + ')' + (/accessNotConfigured|has not been used|disabled/i.test(t) ? ' – צריך להפעיל את Google Drive API בפרויקט' : /insufficient/i.test(t) ? ' – לא ניתנה הרשאה ל-Drive' : '')); });
       return r.json();
     }).then(function (data) { return (data.files && data.files[0] && data.files[0].id) || null; });
   }
@@ -2130,7 +2136,7 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
     btns.forEach(function (b) { if (b) b.disabled = true; });
     loadGis().then(function () {
       initTokenClient();
-      return requestToken(true);
+      return requestToken(authInfo ? true : 'consent');
     }).then(function (token) {
       return fetchEmail(token);
     }).then(function (email) {
@@ -2147,8 +2153,9 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
       if (journalLoaded) { mergeCarQueue(); toast('מחובר כ־' + authInfo.email); }
       else toast('מחובר, אבל אין אינטרנט – היומן ייטען כשיתחבר');
     }).catch(function (e) {
-      showGate('auth', 'התחבר עם חשבון Google כדי לשמור את היומן שלך בחשבון שלך, ולא במכשיר.');
-      toast('ההתחברות נכשלה: ' + (e && e.message ? e.message : e));
+      authInfo = null; saveAuth();
+      showGate('auth', 'ההתחברות לא הושלמה: ' + (e && e.message ? e.message : e) + '. נסה שוב.');
+      toast('ההתחברות נכשלה');
     }).then(function () {
       btns.forEach(function (b) { if (b) b.disabled = false; });
     });
@@ -2225,33 +2232,12 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
       showGate('auth', 'התחבר עם חשבון Google כדי לשמור את היומן שלך בחשבון שלך, ולא במכשיר.');
       return;
     }
-    showGate('load', 'טוען את היומן מ-Google…');
-    loadGis().then(function () {
-      initTokenClient();
-      return ensureToken(false);
-    }).then(function () {
-      return afterSignedIn();
-    }).then(function () {
-      showGate('hide');
-      updateAcctUi();
-      renderProfile();
-      renderDay();
-      mergeCarQueue();
-    }).catch(function (e) {
-      var cache = readCache();
-      if (cache) {
-        applyJournal(cache.journal);
-        journalLoaded = true;
-        showGate('hide');
-        updateAcctUi();
-        renderProfile();
-        renderDay();
-        mergeCarQueue();
-        setSyncStatus('wait', 'לא הצלחתי להתחבר ל-Google. מוצג עותק זמני מהמכשיר.');
-        return;
-      }
-      showGate('auth', 'יש להתחבר שוב ל-Google כדי לטעון את היומן.' + (e && e.message ? ' (' + e.message + ')' : ''));
-    });
+    // Browsers block Google's popup without a click, so ask for one click to continue the session.
+    journalLoaded = false;
+    renderProfile();
+    renderDay();
+    loadGis().then(initTokenClient).catch(function () { });
+    showGate('auth', 'שלום ' + authInfo.email + ' – לחץ להמשך עם Google כדי לטעון את היומן.');
   }
 
   if (CLOUD_READY) bootCloud(); else bootLocal();
