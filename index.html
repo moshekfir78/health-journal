@@ -206,7 +206,7 @@ nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-co
     <button class="link-btn hidden" id="todayBtn">↩ חזרה להיום</button>
     <div class="chips" id="dayChips"></div>
     <button class="checkin-btn" id="ciStart"><span class="big">💬</span><span><b>שאל אותי על היום</b><small>בערך דקה · אני שואל בקול ואתה עונה</small></span></button>
-    <button class="car-toggle hidden" id="carToggle"><span class="big">🚗</span><span><b>מצב רכב: <span id="carToggleState">כבוי</span></b><small>כפתור Play בהגה = דיבור ליומן</small></span></button>
+    <button class="car-toggle hidden" id="carToggle"><span class="big">🚗</span><span><b>מצב רכב: <span id="carToggleState">כבוי</span></b><small>כפתור Play בהגה = שיחה קולית עם היומן</small></span></button>
     <div class="card voice-hint" id="voiceHint"><span class="big">🎤</span><div><b>ספר לי איך היה היום</b><div class="muted">לחץ על המיקרופון ודבר חופשי – אני אמלא את השדות בשבילך</div></div></div>
     <div id="dayBody"></div>
   </section>
@@ -241,10 +241,10 @@ nav.bottom .mic-fab{order:-1;margin:0 auto 16px;width:84px;height:84px;border-co
         <input type="file" id="importFile" accept="application/json,.json" class="hidden">
       </div>
     </div>
-    <div class="card hidden" id="carSettings"><h2>🚗 מצב רכב – כפתור אחד לדיבור</h2>
+    <div class="card hidden" id="carSettings"><h2>🚗 מצב רכב – שיחה קולית</h2>
       <label class="sw"><input type="checkbox" id="carModeSw"><span>מצב רכב פועל</span></label>
       <label class="sw"><input type="checkbox" id="carBtSw"><span>להשתמש במיקרופון של הרכב (בלוטות׳) אם אפשר</span></label>
-      <p class="muted">כשמצב רכב פועל: לוחצים על כפתור ה-Play/Pause בהגה (או באוזניות), שומעים "מקשיב", אומרים משפט אחד – למשל "אכלתי סלט בצהריים והלכתי חצי שעה" – ושומעים "רשמתי: …". זה נשמר לבד ביומן של היום ומסומן 🚗 לבדיקה אחר כך.</p>
+      <p class="muted">לוחצים פעם אחת – ב-Android Auto על "שיחה עם היומן" (▶), או בכפתור Play בהגה / באוזניות – ואני שואל שאלה אחת קצרה בכל פעם: מה אכלת, כמה זזת, איך ישנת ועוד. עונים בקול. אפשר לומר "דלג" כדי לעבור לשאלה הבאה, "סיים" כדי לסיים, או "בטל". בסוף אני מקריא סיכום ושואל אם לשמור – וזה נכנס ליומן של היום ומסומן 🚗.</p>
       <p class="muted">טעות? לוחצים שוב על הכפתור תוך 10 שניות, או לוחצים ואומרים "בטל".</p>
       <div id="carWarn" class="car-warn"></div>
       <div class="backup-actions">
@@ -796,7 +796,75 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
     }
     return out.join(', ');
   }
-  var api = { parse: parse, normalizeNumbers: normalizeNumbers, answers: answers, summarize: summarize };
+  /* ===== car conversation (Android Auto): one short question at a time, parsed here so the
+     native service and the web app use the same rules. Returns {ok, fields, say, follow?}.
+     ok=false → not understood (the car asks once more, then keeps the raw text). ===== */
+  var MEAL_SAY = { breakfast: 'בוקר', lunch: 'צהריים', dinner: 'ערב', snacks: 'נשנוש' };
+  function carAnswer(qid, text) {
+    var t = String(text || '').trim(), f = {}, v;
+    var yn = function (key, yes, no) { var b = yesNo(t); if (b == null) return { ok: false }; f[key] = b; return { ok: true, fields: f, say: b ? yes : no }; };
+    switch (qid) {
+      case 'food':
+        var r = foodAnswer(t), parts = [], mv = 0, anyMv = false;
+        ['breakfast', 'lunch', 'dinner', 'snacks'].forEach(function (k) { var m = r.meals[k]; if (m && m.text) { (f.meals = f.meals || {})[k] = m.text; parts.push(MEAL_SAY[k] + ': ' + m.text); } });
+        r.exercises.forEach(function (e) { if (e.minutes != null) { mv += e.minutes; anyMv = true; } });
+        if (anyMv) f.movement = Math.round(mv);
+        if (r.water != null) f.water = r.water;
+        if (r.sleep != null) f.sleep = r.sleep;
+        if (r.weight != null) f.weight = r.weight;
+        if (r.mood != null) f.mood = r.mood;
+        var nt = r.notes.filter(function (s) { return s.length > 2; });
+        if (nt.length) f.notes = nt.join('. ');
+        if (!Object.keys(f).length) {
+          if (notesAnswer(t) === '') return { ok: true, fields: {}, say: 'בסדר' };
+          f.foodNote = t; return { ok: true, fields: f, say: 'רשמתי' };
+        }
+        return { ok: true, fields: f, say: parts.length ? parts.join(', ') : 'רשמתי' };
+      case 'breakfast': return yn('breakfast', 'רשמתי ארוחת בוקר', 'בלי ארוחת בוקר');
+      case 'onePlate': return yn('onePlate', 'יופי', 'בסדר, מחר');
+      case 'spiral': return yn('spiral', 'רשמתי. תודה ששיתפת', 'יופי, בלי לופ');
+      case 'movement':
+        v = minutes(t); if (v == null) return { ok: false };
+        f.movement = v; return { ok: true, fields: f, say: v ? v + ' דקות' : 'בלי תנועה היום' };
+      case 'bedtime':
+        var s = sleepAnswer(t), bt = s.bedtime, n = nums(t);
+        if (!bt && n.length) bt = bedClock(n[0]);
+        if (!bt) return { ok: false };
+        f.bedtime = bt; if (s.bedtime && s.hours != null) f.sleep = s.hours;
+        return { ok: true, fields: f, say: 'לישון ב-' + bt };
+      case 'sleep':
+        var sh = sleepAnswer(t).hours; if (sh == null) sh = number(t, 1, 16);
+        if (sh == null) return { ok: false };
+        f.sleep = sh; return { ok: true, fields: f, say: spokenNum(sh) + ' שעות שינה' };
+      case 'water':
+        v = water(t); if (v == null) return { ok: false };
+        f.water = v; return { ok: true, fields: f, say: v + ' כוסות מים' };
+      case 'mood':
+        v = mood(t); if (v == null) return { ok: false };
+        f.mood = v; return { ok: true, fields: f, say: 'מצב רוח ' + v };
+      case 'weight':
+        v = weight(t); if (v == null) return yesNo(t) === false ? { ok: true, fields: {}, say: 'בסדר' } : { ok: false };
+        f.weight = v; return { ok: true, fields: f, say: 'משקל ' + spokenNum(v) };
+      case 'bp':
+        v = bloodPressure(t); if (v) { f.bloodPressure = v; return { ok: true, fields: f, say: 'לחץ דם ' + v.replace('/', ' על ') }; }
+        var y = yesNo(t);
+        if (y === false) return { ok: true, fields: {}, say: 'בסדר' };
+        if (y === true) return { ok: true, fields: {}, follow: 'bpValue', say: '' };
+        return { ok: false };
+      case 'bpValue':
+        v = bloodPressure(t); if (!v) return yesNo(t) === false ? { ok: true, fields: {}, say: 'בסדר' } : { ok: false };
+        f.bloodPressure = v; return { ok: true, fields: f, say: 'לחץ דם ' + v.replace('/', ' על ') };
+      case 'notes':
+        v = notesAnswer(t);
+        if (/^(?:לא|אין|זהו|כלום)(?:\s+(?:זהו|זה\s+הכול?|תודה|כלום|לא|נוסף))*$/.test(v.replace(/[.,!?]/g, ' ').replace(/\s+/g, ' ').trim())) v = '';
+        if (v) f.notes = v;
+        return { ok: true, fields: f, say: v ? 'רשמתי' : 'בסדר' };
+      case 'confirm':
+        var c = yesNo(t); return c == null ? { ok: false } : { ok: true, fields: {}, yes: c, say: '' };
+    }
+    return { ok: false };
+  }
+  var api = { parse: parse, normalizeNumbers: normalizeNumbers, answers: answers, summarize: summarize, carAnswer: carAnswer };
   root.HealthParser = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
@@ -1726,6 +1794,23 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
   // ---------- car mode: hands-free entries from the steering-wheel button / widget ----------
   var CAR = !!(NB && NB.carQueuePeek), carT = null;
   function hhmmOf(ts) { var d = new Date(ts); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); }
+  /** structured answers from the car conversation (HealthParser.carAnswer) → the day entry; nothing is overwritten with empties */
+  var CAR_Q = { food: 'אוכל', breakfast: 'ארוחת בוקר', onePlate: 'צלחת אחת', movement: 'תנועה', bedtime: 'שעת שינה', sleep: 'שינה', mood: 'מצב רוח', spiral: 'סחרור', water: 'מים', weight: 'משקל', bp: 'לחץ דם', bpValue: 'לחץ דם', notes: 'הערה', confirm: 'אישור' };
+  function applyCarFields(e, f) {
+    var addNote = function (t) { t = String(t || '').trim(); if (t && e.notes.indexOf(t) < 0) e.notes = (e.notes.trim() ? e.notes.trim() + '\n' : '') + t; };
+    if (f.meals && typeof f.meals === 'object') MEALS.forEach(function (m) {
+      var t = String(f.meals[m[0]] || '').trim(); if (!t) return;
+      var tgt = e.meals[m[0]], cur = tgt.text.trim();
+      if (cur.indexOf(t) < 0) tgt.text = cur ? cur + ', ' + t : t;
+    });
+    ['breakfast', 'onePlate', 'spiral'].forEach(function (k) { if (typeof f[k] === 'boolean') e[k] = f[k]; });
+    ['movement', 'bedtime', 'sleep', 'weight', 'bloodPressure'].forEach(function (k) { if (f[k] != null && String(f[k]).trim() !== '') e[k] = String(f[k]); });
+    if (f.water != null && !isNaN(parseInt(f.water, 10))) e.water = Math.max(0, parseInt(f.water, 10));
+    if (f.mood != null) { var md = parseInt(f.mood, 10); if (md >= 1 && md <= 5) e.mood = md; }
+    if (f.foodNote) addNote('🚗 אוכל: ' + f.foodNote);
+    if (f.notes) addNote(f.notes);
+    if (f.raw && typeof f.raw === 'object') Object.keys(f.raw).forEach(function (k) { addNote('🚗 ' + (CAR_Q[k] || k) + ': ' + f.raw[k]); });
+  }
   /** pull entries saved by the native service (durable queue) into localStorage; ack only after a successful save */
   function mergeCarQueue() {
     if (!CAR) return 0;
@@ -1742,7 +1827,8 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
       if (!e.car) e.car = [];
       if (!e.car.some(function (c) { return c.id === it.id; })) {
         var text = String(it.text || '').trim();
-        if (text) { var pp = HealthParser.parse(text); applyParsed(e, pp); pp.car = [{ text: text }]; lastCar = { day: day, focus: pp }; }
+        if (it.fields && typeof it.fields === 'object') { applyCarFields(e, it.fields); lastCar = { day: day, focus: null }; }
+        else if (text) { var pp = HealthParser.parse(text); applyParsed(e, pp); pp.car = [{ text: text }]; lastCar = { day: day, focus: pp }; }
         e.car.push({ id: String(it.id), ts: ts, text: text, summary: String(it.summary || ''), reviewed: false });
         added++; days[day] = 1;
       }
@@ -1818,17 +1904,23 @@ var GOOGLE_CLIENT_ID = '547146180470-k61olfrtd28h6k14llqol8en4u7nfo8q.apps.googl
     $('carBattery').classList.toggle('hidden', !!st.battery);
   }
   window.__carState = renderCarUi;
+  function loggedWithin(field, days) {
+    for (var i = 0; i < days; i++) { var x = db.entries[addDays(today(), -i)]; if (x && str(x[field]).trim() !== '') return true; }
+    return false;
+  }
+  function sendCarHints() { try { if (NB && NB.setCarHints && (!CLOUD_ON || journalLoaded)) NB.setCarHints(loggedWithin('weight', 7), loggedWithin('bloodPressure', 3)); } catch (err) { } }
   if (NB && NB.getCarState) {
-    $('carToggle').onclick = function () { var st = carState(); NB.setCarMode(!st.carMode); setTimeout(renderCarUi, 400); if (!st.carMode) toast('🚗 מצב רכב: לחץ על כפתור ה-Play בהגה ודבר'); };
+    $('carToggle').onclick = function () { var st = carState(); NB.setCarMode(!st.carMode); setTimeout(renderCarUi, 400); if (!st.carMode) toast('🚗 מצב רכב: לחץ על Play בהגה – אשאל אותך כמה שאלות'); };
     $('carModeSw').onchange = function () { NB.setCarMode(this.checked); setTimeout(renderCarUi, 400); };
     $('carBtSw').onchange = function () { NB.setCarBtMic(this.checked); };
     $('carBattery').onclick = function () { NB.requestBatteryExemption(); };
     $('carWidget').onclick = function () { if (!NB.pinWidget()) toast('הוסף ידנית: לחיצה ארוכה על מסך הבית ← ווידג׳טים ← יומן בריאות'); };
     $('carShortcut').onclick = function () { if (!NB.pinShortcut()) toast('לחיצה ארוכה על אייקון האפליקציה ← "דבר ליומן"'); };
-    $('carTest').onclick = function () { NB.carCaptureNow(); };
+    $('carTest').onclick = function () { sendCarHints(); NB.carCaptureNow(); };
     renderCarUi();
+    sendCarHints();
   }
-  document.addEventListener('visibilitychange', function () { if (!document.hidden) { mergeCarQueue(); renderCarUi(); } });
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) { mergeCarQueue(); renderCarUi(); } else sendCarHints(); });
   if (CAR) setInterval(function () { if (!document.hidden) mergeCarQueue(); }, 60000);
 
   // ---------- backup ----------
